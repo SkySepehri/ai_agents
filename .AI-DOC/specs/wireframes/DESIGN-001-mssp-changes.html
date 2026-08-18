@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DESIGN-001 Wireframe: MSSP Portal Changes</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0a0f1a; color: #e5e5e5; padding: 24px; }
+  .annotation { font-size: 10px; color: #555; font-style: italic; margin-top: 8px; }
+  .state-title { font-size: 12px; font-weight: 600; color: #888; margin-bottom: 12px; padding: 4px 10px; background: #12151e; border-radius: 4px; display: inline-block; }
+  .spacer { height: 40px; }
+  h1 { font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .diff-before { border-left: 3px solid #c41d1d; padding-left: 10px; margin-bottom: 4px; background: rgba(220,38,38,0.06); border-radius: 0 4px 4px 0; }
+  .diff-after { border-left: 3px solid #389e0d; padding-left: 10px; margin-bottom: 4px; background: rgba(82,196,26,0.06); border-radius: 0 4px 4px 0; }
+  .diff-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .diff-label-before { color: #c41d1d; }
+  .diff-label-after { color: #389e0d; }
+  code { font-family: "Menlo", "Monaco", "Courier New", monospace; font-size: 11px; background: #1a1e2e; padding: 2px 6px; border-radius: 3px; color: #a8d8ff; }
+  .code-block { font-family: "Menlo", "Monaco", "Courier New", monospace; font-size: 11px; background: #12151e; border: 1px solid #1e2333; border-radius: 6px; padding: 12px 16px; color: #a8d8ff; line-height: 1.8; white-space: pre; overflow-x: auto; margin-bottom: 12px; }
+  .code-del { color: #ff6b6b; text-decoration: line-through; }
+  .code-add { color: #69d95a; }
+  .code-comment { color: #555; }
+
+  /* MSSP portal simulation (uses the MSSP dark teal design system from the codebase) */
+  .mssp-page { background: #0d1117; border: 1px solid #1a2030; border-radius: 12px; overflow: hidden; max-width: 900px; }
+  .mssp-header { background: #111722; border-bottom: 1px solid #1a2030; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .mssp-header-title { font-size: 14px; font-weight: 600; color: #e5e5e5; }
+  .mssp-header-sub { font-size: 11px; color: #555; margin-top: 2px; }
+  .mssp-kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 16px 20px; }
+  .mssp-kpi-card { background: #111722; border: 1px solid #1a2030; border-radius: 10px; padding: 12px 14px; }
+  .mssp-kpi-label { font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .mssp-kpi-value { font-size: 24px; font-weight: 700; color: #e5e5e5; }
+  .mssp-kpi-sub { font-size: 10px; color: #444; margin-top: 2px; }
+
+  /* Reports table */
+  .mssp-table-wrapper { padding: 0 20px 20px 20px; }
+  .mssp-filter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .mssp-search { background: #111722; border: 1px solid #1e2639; border-radius: 6px; padding: 6px 10px; font-size: 11px; color: #bbb; width: 220px; }
+  .mssp-select { background: #111722; border: 1px solid #1e2639; border-radius: 6px; padding: 6px 10px; font-size: 11px; color: #bbb; }
+  .mssp-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .mssp-table th { background: #0d1117; border-bottom: 1px solid #1a2030; padding: 8px 10px; text-align: left; font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  .mssp-table td { padding: 8px 10px; border-bottom: 1px solid #0f1520; color: #bbb; }
+  .mssp-table tr:last-child td { border-bottom: none; }
+  .mssp-table tr:hover td { background: rgba(255,255,255,0.015); }
+
+  /* Score chip in MSSP table */
+  .score-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+  .score-chip-critical { background: rgba(220,38,38,0.15); color: #DC2626; border: 1px solid rgba(220,38,38,0.3); }
+  .score-chip-high { background: rgba(225,112,54,0.15); color: #E17036; border: 1px solid rgba(225,112,54,0.3); }
+  .score-chip-low { background: rgba(82,196,26,0.1); color: #52C41A; border: 1px solid rgba(82,196,26,0.3); }
+  .shape-square { width: 7px; height: 7px; background: currentColor; display: inline-block; flex-shrink: 0; }
+  .shape-triangle { width: 0; height: 0; border-left: 3.5px solid transparent; border-right: 3.5px solid transparent; border-bottom: 7px solid currentColor; display: inline-block; flex-shrink: 0; }
+  .shape-circle-outline { width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid currentColor; background: transparent; display: inline-block; flex-shrink: 0; }
+
+  /* Download button */
+  .download-btn { display: inline-flex; align-items: center; gap: 4px; background: #0d6efd; border-radius: 5px; color: white; font-size: 10px; padding: 4px 10px; cursor: pointer; border: none; }
+  .download-btn-loading { background: #0a5eda; opacity: 0.7; }
+
+  /* Strikethrough for removed engine */
+  .engine-removed { color: #c41d1d; text-decoration: line-through; font-size: 10px; }
+  .engine-kept { color: #69d95a; font-size: 10px; }
+
+  /* Section block */
+  .section-block { background: #0d1117; border: 1px solid #1a2030; border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; }
+  .section-block-title { font-size: 12px; font-weight: 600; color: #bbb; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<h1>DESIGN-001 Wireframe: MSSP Portal Changes</h1>
+<p style="font-size:11px;color:#555;margin-bottom:24px;">
+  Limited-scope changes to the MSSP Partner Portal. No attack-path graph, no posture view, no remediation list.
+  Changes: (1) Remove "Threat Detection" from ENGINE_ORDER. (2) Consume v2 score/label fields. (3) PDF download triggers redesigned PDF.
+</p>
+
+<!-- CHANGE 1: ENGINE_ORDER -->
+<div class="section-block">
+  <div class="section-block-title">Change 1: Remove "Threat Detection" from ENGINE_ORDER in ReportsPage.tsx</div>
+
+  <div class="code-block"><span class="code-comment">// File: mssp_partner/src/pages/reports/ReportsPage.tsx (lines 26-32)</span>
+
+<span class="code-comment">// BEFORE:</span>
+const ENGINE_ORDER = [
+  "Identity Hygiene",
+  "Identity Intelligence",
+  "Microsoft 365",
+  "Platform Hygiene",
+<span class="code-del">  "Threat Detection",   // REMOVE THIS</span>
+];
+
+<span class="code-comment">// AFTER:</span>
+const ENGINE_ORDER = [
+<span class="code-add">  "Identity Hygiene",</span>
+<span class="code-add">  "Identity Intelligence",</span>
+<span class="code-add">  "Microsoft 365",</span>
+<span class="code-add">  "Platform Hygiene",</span>
+];
+
+<span class="code-comment">// Also remove:
+// - THREAT_DETECTION_MAPPING constant (lines 51-57)
+// - The "Threat Detection" case in sanitizeEngineDetails switch (lines 75-87)</span></div>
+  <p class="annotation">Per UW FR-P1-006: "Live Threat Detection MUST be removed from BLA scoring, engine matrix, and PDF." This is a P0/P1 change that can ship independently.</p>
+</div>
+
+<!-- CHANGE 2: V2 SCORE FIELDS -->
+<div class="section-block">
+  <div class="section-block-title">Change 2: Consume v2 riskLabel and riskScore from real API (replacing mockResolve())</div>
+
+  <div class="code-block"><span class="code-comment">// v1 behavior: map numeric riskLevel via RISK_LEVEL_TO_STR</span>
+const RISK_LEVEL_TO_STR: Record&lt;number, string&gt; = {
+  1: "low", 2: "medium", 3: "high", 4: "critical"
+};
+function mapRiskLevel(raw: unknown): string {
+  if (typeof raw === "string") return raw.toLowerCase();
+  return RISK_LEVEL_TO_STR[Number(raw)] ?? "low";
+}
+
+<span class="code-comment">// v2 behavior: API returns riskLabel as a pre-computed string</span>
+<span class="code-comment">// No mapping function needed -- use riskLabel directly from response:</span>
+<span class="code-add">// response.riskLabel: "Critical" | "High" | "Medium" | "Low"</span>
+<span class="code-add">// response.riskScore: number (0-100, headline v2 score)</span>
+<span class="code-add">// response.scoringModelVersion: "v2" (for score trend annotation)</span></div>
+
+  <p class="annotation">
+    The MSSP portal will consume the same /portal/bl/identities v2 endpoint. The riskLabel field is pre-computed server-side (eliminating the frontend mapping bug that caused the High/Critical label swap). MSSP-2 ticket: replace mockResolve() with real fetch calls.
+  </p>
+</div>
+
+<!-- CHANGE 3: REPORTS PAGE VISUAL (before + after) -->
+<div class="spacer"></div>
+<div class="state-title">Before: Reports Page with Threat Detection in engine display (v1)</div>
+<div class="mssp-page" style="margin-bottom:16px;">
+  <div class="mssp-header">
+    <div>
+      <div class="mssp-header-title">Reports</div>
+      <div class="mssp-header-sub">Breach Likelihood Assessment reports generated across your managed clients.</div>
+    </div>
+  </div>
+  <div class="mssp-kpi-row">
+    <div class="mssp-kpi-card">
+      <div class="mssp-kpi-label">Total reports</div>
+      <div class="mssp-kpi-value">47</div>
+      <div class="mssp-kpi-sub">all time</div>
+    </div>
+    <div class="mssp-kpi-card">
+      <div class="mssp-kpi-label">This month</div>
+      <div class="mssp-kpi-value">12</div>
+      <div class="mssp-kpi-sub">August 2026</div>
+    </div>
+    <div class="mssp-kpi-card">
+      <div class="mssp-kpi-label">Avg breach score</div>
+      <div class="mssp-kpi-value" style="color:#DC2626;">71</div>
+      <div class="mssp-kpi-sub">across all clients</div>
+    </div>
+  </div>
+  <div class="mssp-table-wrapper">
+    <div style="font-size:9px;color:#c41d1d;margin-bottom:8px;padding:6px 10px;background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.2);border-radius:4px;">
+      Engines displayed (v1, before change): <span class="engine-removed">Threat Detection</span>, Identity Hygiene, Identity Intelligence, Microsoft 365, Platform Hygiene
+    </div>
+    <table class="mssp-table">
+      <thead>
+        <tr><th>Report ID</th><th>Client</th><th>Score (v1)</th><th>Generated</th><th style="text-align:right;padding-right:14px;">Download</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code style="font-size:9px;background:transparent;color:#555;padding:0;">a1b2c3d4&hellip;</code></td>
+          <td style="font-weight:500;color:#e5e5e5;">Contoso Ltd</td>
+          <td>
+            <span style="font-size:11px;color:#DC2626;font-weight:600;">82</span>
+            <span style="font-size:10px;color:#888;margin-left:4px;">Critical</span>
+          </td>
+          <td style="color:#777;">18 Aug 2026</td>
+          <td style="text-align:right;padding-right:14px;"><button class="download-btn">&#8659; Download</button></td>
+        </tr>
+        <tr>
+          <td><code style="font-size:9px;background:transparent;color:#555;padding:0;">e5f6g7h8&hellip;</code></td>
+          <td style="font-weight:500;color:#e5e5e5;">Fabrikam Inc</td>
+          <td>
+            <span style="font-size:11px;color:#E17036;font-weight:600;">55</span>
+            <span style="font-size:10px;color:#888;margin-left:4px;">High</span>
+          </td>
+          <td style="color:#777;">15 Aug 2026</td>
+          <td style="text-align:right;padding-right:14px;"><button class="download-btn">&#8659; Download</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="state-title">After: Reports Page without Threat Detection, v2 score fields consumed</div>
+<div class="mssp-page">
+  <div class="mssp-header">
+    <div>
+      <div class="mssp-header-title">Reports</div>
+      <div class="mssp-header-sub">Breach Likelihood Assessment reports generated across your managed clients.</div>
+    </div>
+  </div>
+  <div class="mssp-kpi-row">
+    <div class="mssp-kpi-card">
+      <div class="mssp-kpi-label">Total reports</div>
+      <div class="mssp-kpi-value">47</div>
+      <div class="mssp-kpi-sub">all time</div>
+    </div>
+    <div class="mssp-kpi-card">
+      <div class="mssp-kpi-label">This month</div>
+      <div class="mssp-kpi-value">12</div>
+      <div class="mssp-kpi-sub">August 2026</div>
+    </div>
+    <div class="mssp-kpi-card">
+      <div class="mssp-kpi-label">Avg breach score</div>
+      <div class="mssp-kpi-value" style="color:#DC2626;">71</div>
+      <div class="mssp-kpi-sub">across all clients (v2)</div>
+    </div>
+  </div>
+  <div class="mssp-table-wrapper">
+    <div style="font-size:9px;color:#69d95a;margin-bottom:8px;padding:6px 10px;background:rgba(82,196,26,0.06);border:1px solid rgba(82,196,26,0.2);border-radius:4px;">
+      Engines displayed (v2, after change): <span class="engine-kept">Identity Hygiene</span>, <span class="engine-kept">Identity Intelligence</span>, <span class="engine-kept">Microsoft 365</span>, <span class="engine-kept">Platform Hygiene</span>
+      &mdash; Threat Detection removed.
+    </div>
+    <table class="mssp-table">
+      <thead>
+        <tr><th>Report ID</th><th>Client</th><th>Score (v2)</th><th>Generated</th><th style="text-align:right;padding-right:14px;">Download</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code style="font-size:9px;background:transparent;color:#555;padding:0;">a1b2c3d4&hellip;</code></td>
+          <td style="font-weight:500;color:#e5e5e5;">Contoso Ltd</td>
+          <td>
+            <span class="score-chip score-chip-critical"><span class="shape-square"></span>82 Critical</span>
+          </td>
+          <td style="color:#777;">18 Aug 2026</td>
+          <td style="text-align:right;padding-right:14px;"><button class="download-btn">&#8659; Download</button></td>
+        </tr>
+        <tr>
+          <td><code style="font-size:9px;background:transparent;color:#555;padding:0;">e5f6g7h8&hellip;</code></td>
+          <td style="font-weight:500;color:#e5e5e5;">Fabrikam Inc</td>
+          <td>
+            <span class="score-chip score-chip-high"><span class="shape-triangle"></span>55 High</span>
+          </td>
+          <td style="color:#777;">15 Aug 2026</td>
+          <td style="text-align:right;padding-right:14px;"><button class="download-btn">&#8659; Download</button></td>
+        </tr>
+        <tr>
+          <td><code style="font-size:9px;background:transparent;color:#555;padding:0;">c3d4e5f6&hellip;</code></td>
+          <td style="font-weight:500;color:#e5e5e5;">Alpine Ski Inc</td>
+          <td>
+            <span class="score-chip score-chip-low"><span class="shape-circle-outline"></span>18 Low</span>
+          </td>
+          <td style="color:#777;">12 Aug 2026</td>
+          <td style="text-align:right;padding-right:14px;"><button class="download-btn">&#8659; Download</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<p class="annotation">
+  Key changes in the "after" state:
+  (1) Score display uses SeverityChip pattern (color + shape + text) instead of plain numeric + label. This makes severity scannable in the table.
+  (2) Threat Detection column/engine is absent from all PDF downloads triggered from this table.
+  (3) v2 score is displayed (may differ from v1 for some clients -- score trend chart in PDF annotates the v2 cutover date).
+  (4) PDF download triggers the redesigned 10-page BLAMainContent.tsx (same structure as client portal PDF).
+</p>
+
+<!-- MSSP SCOPE REMINDER -->
+<div class="spacer"></div>
+<div style="border:1px solid #1a2030;border-radius:8px;padding:16px;font-size:11px;color:#555;line-height:1.8;background:#0d1117;">
+  <strong style="color:#888;display:block;margin-bottom:8px;">MSSP Portal Scope (Explicit Out-of-Scope Items)</strong>
+  <ul style="list-style:disc;padding-left:16px;">
+    <li>The MSSP portal does NOT get the interactive attack-path graph. (Out of scope per UW doc.)</li>
+    <li>The MSSP portal does NOT get the posture view (NIST CSF / ISO 27001 / Essential Eight panels).</li>
+    <li>The MSSP portal does NOT get the remediation list.</li>
+    <li>The MSSP portal does NOT get the AD toggle. AD is reflected in the PDF if integrated, but the MSSP user cannot toggle it.</li>
+    <li>The score chip in the table (color + shape + text) applies the same severity encoding rules as the client portal for consistency and accessibility.</li>
+    <li>MSSP-2 (real API integration replacing mockResolve()) is a separate ticket with its own backend dependency. The UI changes in this wireframe can be built against mock data first and wired to the API later.</li>
+    <li>The Admin Dashboard is explicitly out of scope (per UW doc). No BLA changes to admin_dashboard/.</li>
+  </ul>
+</div>
+
+</body>
+</html>

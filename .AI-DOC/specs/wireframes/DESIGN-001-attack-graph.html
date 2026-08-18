@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DESIGN-001 Wireframe: Attack-Path Graph</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f0f0f; color: #e5e5e5; padding: 24px; }
+  .annotation { font-size: 10px; color: #555; font-style: italic; margin-top: 6px; }
+  .state-title { font-size: 12px; font-weight: 600; color: #888; margin-bottom: 12px; padding: 4px 10px; background: #1a1a1a; border-radius: 4px; display: inline-block; }
+  .spacer { height: 40px; }
+  .section-label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+  h1 { font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+
+  /* Graph container */
+  .graph-section { background: linear-gradient(170deg, #3B3544 0%, #151517 50%, #26222E 100%); border-radius: 16px; padding: 20px; filter: drop-shadow(0px 0px 1px rgba(255,255,255,0.3)); }
+  .graph-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .graph-title { font-size: 13px; font-weight: 600; color: #bbb; display: flex; align-items: center; gap: 6px; }
+
+  /* Toolbar */
+  .graph-toolbar { display: flex; align-items: center; gap: 10px; }
+  .toolbar-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; color: #aaa; font-size: 10px; padding: 5px 10px; cursor: pointer; }
+  .toolbar-btn:hover { background: rgba(255,255,255,0.14); }
+  .toggle-container { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #888; }
+  /* antd Switch simulation (ON state) */
+  .toggle-switch-on { width: 32px; height: 17px; background: #1890ff; border-radius: 9px; position: relative; flex-shrink: 0; }
+  .toggle-switch-on::after { content: ""; width: 13px; height: 13px; background: #fff; border-radius: 50%; position: absolute; top: 2px; right: 2px; }
+  /* antd Switch simulation (OFF state) */
+  .toggle-switch-off { width: 32px; height: 17px; background: #444; border-radius: 9px; position: relative; flex-shrink: 0; }
+  .toggle-switch-off::after { content: ""; width: 13px; height: 13px; background: #fff; border-radius: 50%; position: absolute; top: 2px; left: 2px; }
+
+  /* Path cycler */
+  .path-cycler { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 4px 12px; font-size: 10px; color: #aaa; }
+  .path-cycler-btn { background: none; border: none; color: #888; cursor: pointer; font-size: 12px; padding: 0 2px; }
+
+  /* Graph canvas area: reagraph <GraphCanvas> renders into a positioned container */
+  .graph-svg-area { background: rgba(0,0,0,0.3); border-radius: 12px; padding: 24px; min-height: 360px; overflow: auto; position: relative; }
+
+  /* Node styles -- simulates reagraph custom renderNode output */
+  .node-wrap { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; }
+  .kill-chain-chip { font-size: 8px; font-weight: 700; letter-spacing: 0.08em; padding: 2px 6px; border-radius: 3px; text-transform: uppercase; }
+  .stage-initial { background: rgba(220,38,38,0.2); color: #DC2626; border: 1px solid rgba(220,38,38,0.3); }
+  .stage-escalation { background: rgba(225,112,54,0.2); color: #E17036; border: 1px solid rgba(225,112,54,0.3); }
+  .stage-takeover { background: rgba(220,38,38,0.35); color: #DC2626; border: 1px solid rgba(220,38,38,0.5); font-weight: 900; }
+
+  /* Graph canvas layout (wireframe uses HTML approximation; actual implementation uses reagraph GraphCanvas) */
+  .graph-canvas { display: flex; align-items: center; justify-content: space-around; min-height: 280px; gap: 0; }
+  .node-column { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .edge-column { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-width: 120px; }
+
+  /* Individual node shapes -- rendered via reagraph renderNode prop returning SVG <g> elements */
+  .node-circle { width: 64px; height: 64px; border-radius: 50%; background: rgba(220,38,38,0.12); border: 3px solid #DC2626; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; }
+  .node-circle-selected { box-shadow: 0 0 0 4px rgba(220,38,38,0.3); }
+  .node-rect { width: 72px; height: 52px; border-radius: 8px; background: rgba(225,112,54,0.12); border: 2px solid #E17036; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .node-hexagon { width: 72px; height: 64px; background: rgba(220,38,38,0.15); border: 3px solid #DC2626; clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .node-icon { font-size: 20px; }
+  .node-label { font-size: 10px; color: #ccc; text-align: center; max-width: 80px; word-break: break-word; line-height: 1.3; }
+  .node-sublabel { font-size: 9px; color: #666; text-align: center; max-width: 80px; }
+
+  /* Edge / arrow -- simulates reagraph custom renderEdge output */
+  .edge-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; }
+  .edge-line { width: 80px; height: 2px; background: linear-gradient(90deg, #E17036, #DC2626); position: relative; }
+  .edge-line::after { content: ""; position: absolute; right: -6px; top: -4px; border-left: 8px solid #DC2626; border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
+  /* Hot edge glow: CSS @keyframes only, no D3 or JS animation */
+  .edge-line-hot { box-shadow: 0 0 8px rgba(220,38,38,0.6); animation: glow-pulse 2s ease-in-out infinite; }
+  @keyframes glow-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+  .edge-label { font-size: 9px; color: #888; white-space: nowrap; }
+  .mitre-tag { font-size: 8px; background: rgba(24,144,255,0.15); color: #1890ff; border: 1px solid rgba(24,144,255,0.3); border-radius: 3px; padding: 1px 5px; white-space: nowrap; }
+
+  /* Severity chips */
+  .chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 4px; font-size: 9px; font-weight: 600; }
+  .chip-critical { background: rgba(220,38,38,0.2); color: #DC2626; border: 1px solid rgba(220,38,38,0.4); }
+  .chip-high { background: rgba(225,112,54,0.2); color: #E17036; border: 1px solid rgba(225,112,54,0.4); }
+  .shape-square { width: 7px; height: 7px; background: currentColor; display: inline-block; flex-shrink: 0; }
+  .shape-triangle { width: 0; height: 0; border-left: 3.5px solid transparent; border-right: 3.5px solid transparent; border-bottom: 7px solid currentColor; display: inline-block; flex-shrink: 0; }
+
+  /* Severity legend */
+  .severity-legend { display: flex; gap: 12px; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); }
+  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 9px; color: #777; }
+  .legend-square { width: 8px; height: 8px; background: #DC2626; display: inline-block; }
+  .legend-triangle { width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-bottom: 8px solid #E17036; display: inline-block; }
+  .legend-circle-filled { width: 8px; height: 8px; border-radius: 50%; background: #FFDC00; display: inline-block; }
+  .legend-circle-outline { width: 8px; height: 8px; border-radius: 50%; border: 2px solid #52C41A; background: transparent; display: inline-block; }
+
+  /* View toggle -- antd Segmented simulation */
+  .view-toggle { display: flex; background: rgba(255,255,255,0.05); border-radius: 8px; padding: 3px; gap: 2px; }
+  .toggle-btn { padding: 5px 14px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; border: none; }
+  .toggle-active { background: #1890ff; color: #fff; }
+  .toggle-inactive { background: transparent; color: #888; }
+
+  /* Empty state */
+  .empty-graph { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: #555; gap: 8px; }
+  .empty-icon { width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+
+  /* Path fade transition overlay annotation */
+  .transition-annotation { position: absolute; top: 8px; left: 8px; font-size: 9px; color: #444; font-style: italic; pointer-events: none; }
+</style>
+</head>
+<body>
+
+<h1>DESIGN-001 Wireframe: Attack-Path Graph</h1>
+<p style="font-size:11px;color:#555;margin-bottom:6px;">
+  The primary interactive view: attack-path graph rendered via <strong>reagraph v4.21.5</strong>
+  (<code>&lt;GraphCanvas layoutType="left-right" renderNode={...} renderEdge={...}&gt;</code>),
+  toolbar (antd Switch + Button), path cycler, severity legend, view toggle (antd Segmented).
+</p>
+<p style="font-size:11px;color:#555;margin-bottom:24px;">
+  Nodes encoded by entity type (SVG shape via custom renderNode) and severity (border color). Edges show MITRE technique tags.
+  Path fade transitions use <strong>motion v12</strong> AnimatePresence. Blast radius slide uses motion.div. No D3, no dagre, no @dagrejs/dagre.
+</p>
+
+<!-- VIEW TOGGLE (antd Segmented -- positioned above the entire attack/posture section) -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+  <div style="font-size:13px;font-weight:600;color:#bbb;">Breach Likelihood Assessment</div>
+  <!-- antd Segmented component: activeView="attack" | "posture" -->
+  <div class="view-toggle" role="tablist" aria-label="View selection">
+    <button class="toggle-btn toggle-active" role="tab" aria-selected="true">Attack</button>
+    <button class="toggle-btn toggle-inactive" role="tab" aria-selected="false">Posture</button>
+  </div>
+</div>
+<p class="annotation" style="margin-bottom:24px;">
+  View toggle: antd Segmented component (ViewToggle.tsx). Switching hides/shows sections via CSS display:none -- no network call, no unmount. SC-008: under 200ms guaranteed.
+  State lives in BreachLikelihoodV2/index.tsx as activeView: "attack" | "posture".
+</p>
+
+<!-- STATE 1: DEFAULT GRAPH (Critical path, 3 hops) -->
+<div class="state-title">State 1: Attack Graph -- Critical Path (3 hops, "Walk the path" auto-played on Critical score)</div>
+<div class="graph-section">
+
+  <!-- Header row -->
+  <div class="graph-header">
+    <div class="graph-title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      Attack Path to Global Administrator
+    </div>
+
+    <!-- Toolbar (GraphToolbar.tsx) -->
+    <div class="graph-toolbar">
+      <!-- antd Switch: only visible when adIntegrationState === "integrated" -->
+      <div class="toggle-container">
+        <span style="font-size:10px;color:#888;">AD integrated</span>
+        <!-- antd Switch ON state -->
+        <div class="toggle-switch-on" role="switch" aria-checked="true" aria-label="Toggle Active Directory integration in graph"></div>
+      </div>
+      <!-- antd Button secondary -->
+      <button class="toolbar-btn" aria-label="Replay walk animation">&#9654; Replay walk</button>
+      <!-- antd Button secondary -->
+      <button class="toolbar-btn" aria-label="Show blast radius">&#9762; Show blast radius</button>
+      <!-- PathCycler.tsx -->
+      <div class="path-cycler" aria-label="Path navigation: showing path 1 of 5" aria-live="polite">
+        <button class="path-cycler-btn" aria-label="Previous path">&#8249;</button>
+        <span>5 paths &mdash; showing 1 of 5</span>
+        <button class="path-cycler-btn" aria-label="Next path">&#8250;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Severity legend (SeverityLegend.tsx) -->
+  <div style="margin-bottom:16px;">
+    <div class="severity-legend">
+      <span style="font-size:9px;color:#555;margin-right:4px;">Severity:</span>
+      <div class="legend-item"><span class="legend-square"></span> Critical</div>
+      <div class="legend-item"><span class="legend-triangle"></span> High</div>
+      <div class="legend-item"><span class="legend-circle-filled"></span> Medium</div>
+      <div class="legend-item"><span class="legend-circle-outline"></span> Low</div>
+      <span style="margin-left:8px;font-size:9px;color:#555;">Node shape = entity type (via reagraph renderNode). Border color = severity.</span>
+    </div>
+  </div>
+
+  <!--
+    reagraph <GraphCanvas> renders here.
+    The wireframe below is an HTML approximation of the graph output.
+    Actual implementation:
+      <GraphCanvas
+        nodes={mappedNodes}
+        edges={mappedEdges}
+        layoutType="left-right"
+        renderNode={({ node }) => <AttackNode node={node} ... />}
+        renderEdge={({ edge }) => <AttackEdge edge={edge} ... />}
+        onNodeClick={(node) => handleNodeClick(node)}
+        onEdgeClick={(edge) => handleEdgeClick(edge)}
+      />
+    The GraphCanvas container has role="img" aria-label="Attack path graph from entry node to Global Administrator"
+  -->
+  <div class="graph-svg-area" role="img" aria-label="Attack path graph from entry node to Global Administrator">
+    <div class="transition-annotation">reagraph GraphCanvas -- layoutType="left-right" -- custom renderNode + renderEdge</div>
+    <div class="graph-canvas">
+
+      <!-- Node 1: Entry node (User entity type, Critical severity) -->
+      <!-- reagraph renderNode returns SVG <g>: circle shape + severity border -->
+      <div class="node-column">
+        <div class="kill-chain-chip stage-initial">Initial Access</div>
+        <div class="node-wrap">
+          <div class="node-circle node-circle-selected" tabindex="0" role="button" aria-label="admin@contoso.com, User, Critical severity. Press Enter to view details.">
+            <span class="node-icon">&#128100;</span>
+          </div>
+          <div class="node-label">admin@contoso.com</div>
+          <div class="node-sublabel">Cloud App Administrator</div>
+          <div class="chip chip-critical"><span class="shape-square"></span>Critical</div>
+        </div>
+      </div>
+
+      <!-- Edge 1: MemberOf (hot path) -->
+      <!-- reagraph renderEdge returns SVG: directed arrow + CSS @keyframes glow-pulse on hot edges -->
+      <div class="edge-column">
+        <div class="edge-wrap">
+          <div class="edge-label">MemberOf</div>
+          <div class="edge-line edge-line-hot"></div>
+          <div class="mitre-tag">T1078.004</div>
+        </div>
+      </div>
+
+      <!-- Node 2: Group entity type (High severity) -->
+      <div class="node-column">
+        <div class="kill-chain-chip stage-escalation">Privilege Escalation</div>
+        <div class="node-wrap">
+          <!-- Rounded rectangle = Group entity type -->
+          <div class="node-rect" tabindex="0" role="button" aria-label="IT-Admins, Security Group, High severity. Press Enter to view details.">
+            <span class="node-icon">&#128101;</span>
+          </div>
+          <div class="node-label">IT-Admins</div>
+          <div class="node-sublabel">Security Group (42 members)</div>
+          <div class="chip chip-high"><span class="shape-triangle"></span>High</div>
+        </div>
+      </div>
+
+      <!-- Edge 2: HasRole (active) (hot path) -->
+      <div class="edge-column">
+        <div class="edge-wrap">
+          <div class="edge-label">HasRole (active)</div>
+          <div class="edge-line edge-line-hot"></div>
+          <div class="mitre-tag">T1078.004</div>
+        </div>
+      </div>
+
+      <!-- Node 3: Directory Role entity type (Critical severity) -- Tier-0 target -->
+      <!-- Hexagon = Directory Role entity type -->
+      <div class="node-column">
+        <div class="kill-chain-chip stage-takeover">Takeover</div>
+        <div class="node-wrap">
+          <div class="node-hexagon" tabindex="0" role="button" aria-label="Global Administrator, Directory Role, Critical severity, Tier-0 target. Press Enter to view details." style="display:flex;align-items:center;justify-content:center;">
+            <span class="node-icon" style="font-size:18px;">&#128274;</span>
+          </div>
+          <div class="node-label">Global Administrator</div>
+          <div class="node-sublabel">Tier-0 Target</div>
+          <div class="chip chip-critical"><span class="shape-square"></span>Critical</div>
+          <!-- "Show blast radius" button appears near Tier-0 target node -->
+          <button style="margin-top:6px;font-size:9px;background:rgba(220,38,38,0.2);color:#DC2626;border:1px solid rgba(220,38,38,0.4);border-radius:4px;padding:3px 8px;cursor:pointer;" aria-label="Show blast radius for Global Administrator">&#9762; Show blast radius</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <p class="annotation" style="margin-top:8px;">
+    Graph library: <strong>reagraph v4.21.5</strong>. Component: &lt;GraphCanvas layoutType="left-right" renderNode={AttackNode} renderEdge={AttackEdge}&gt;.
+    Node shapes (custom renderNode SVG): circle=User, rounded rect=Group, hexagon=Directory Role, diamond=App/SPN, shield=Managed Identity, rect=Device, double-rect=Domain.
+    Border color encodes severity (Critical: 3px #DC2626, High: 2px #E17036, Medium: 2px #FFDC00, Low: 1px #52C41A).
+    Hot edge glow: CSS @keyframes "glow-pulse" on the edge element's filter/box-shadow -- no JS animation.
+    Walk animation: WalkAnimation.tsx uses plain setTimeout chain + React state (animationStep). No D3.
+    Path fade transitions when cycling paths: motion v12 AnimatePresence wraps GraphCanvas, opacity 0 to 1 over 150ms.
+    Nodes are keyboard-focusable (tabIndex=0, onKeyDown Enter/Space triggers click handler). ARIA: role="button" per node.
+  </p>
+</div>
+
+<!-- STATE 2: NO PATHS (empty state) -->
+<div class="spacer"></div>
+<div class="state-title">State 2: No Critical Attack Paths Identified (empty state)</div>
+<div class="graph-section">
+  <div class="graph-header">
+    <div class="graph-title">Attack Path to Global Administrator</div>
+    <div class="graph-toolbar">
+      <button class="toolbar-btn" disabled style="opacity:0.4;" aria-disabled="true">Show blast radius</button>
+    </div>
+  </div>
+  <div class="graph-svg-area" role="img" aria-label="No critical attack paths identified">
+    <div class="empty-graph">
+      <div class="empty-icon">&#9989;</div>
+      <div style="font-size:13px;color:#777;font-weight:500;">No critical attack paths identified</div>
+      <div style="font-size:11px;color:#555;">No path from entry node to Global Administrator was found within 4 hops.</div>
+    </div>
+  </div>
+  <p class="annotation">
+    /attack-path returns 404. GraphCanvas is not rendered. KPI cluster still renders with zeroes.
+    "Show blast radius" button is disabled (aria-disabled="true"). Path cycler is hidden (totalPathCount=0).
+  </p>
+</div>
+
+<!-- STATE 3: AD INTEGRATED, AD toggle OFF -->
+<div class="spacer"></div>
+<div class="state-title">State 3: AD Integration ON, user toggles AD off -- graph filters to cloud-only path</div>
+<div class="graph-section">
+  <div class="graph-header">
+    <div class="graph-title">Attack Path to Global Administrator</div>
+    <div class="graph-toolbar">
+      <!-- antd Switch OFF state -->
+      <div class="toggle-container">
+        <span style="font-size:10px;color:#888;">AD integrated</span>
+        <div class="toggle-switch-off" role="switch" aria-checked="false" aria-label="Toggle Active Directory integration in graph"></div>
+      </div>
+      <button class="toolbar-btn" aria-label="Replay walk animation">&#9654; Replay walk</button>
+      <button class="toolbar-btn" aria-label="Show blast radius">&#9762; Show blast radius</button>
+    </div>
+  </div>
+  <div style="margin-bottom:12px;padding:8px 12px;background:rgba(225,112,54,0.1);border:1px solid rgba(225,112,54,0.3);border-radius:8px;font-size:11px;color:#E17036;">
+    Showing cloud-only paths. Active Directory nodes excluded. Headline score recalculated without AD weight.
+  </div>
+  <div class="graph-svg-area" style="min-height:200px;display:flex;align-items:center;justify-content:center;" role="img" aria-label="Cloud-only attack path graph, Active Directory nodes excluded">
+    <div style="font-size:12px;color:#777;">[Cloud-only graph renders here via reagraph GraphCanvas -- nodes/edges with engineId==="active_directory" filtered out before passing to reagraph. Graph re-layouts automatically via reagraph's layoutType="left-right".]</div>
+  </div>
+  <p class="annotation">
+    SC-009: all changes (graph, matrix, score) within 1 second. This is a client-side filter on already-fetched data (no network call).
+    The AD filter removes nodes/edges tagged engineId==="active_directory" from the nodes/edges arrays passed to GraphCanvas.
+    reagraph re-computes layout automatically. Score ring re-animates via ECharts setOption(). KPI cluster re-renders via prop change.
+  </p>
+</div>
+
+<!-- STATE 4: WALK ANIMATION IN PROGRESS -->
+<div class="spacer"></div>
+<div class="state-title">State 4: Walk Animation Playing (step 2 of 3 -- Group node highlighted)</div>
+<div class="graph-section">
+  <div class="graph-header">
+    <div class="graph-title">Attack Path to Global Administrator</div>
+    <div class="graph-toolbar">
+      <div class="toggle-container">
+        <span style="font-size:10px;color:#888;">AD integrated</span>
+        <div class="toggle-switch-on" role="switch" aria-checked="true" aria-label="Toggle Active Directory integration in graph"></div>
+      </div>
+      <button class="toolbar-btn" style="opacity:0.4;" disabled aria-disabled="true">&#9654; Replay walk</button>
+      <button class="toolbar-btn" aria-label="Show blast radius">&#9762; Show blast radius</button>
+    </div>
+  </div>
+  <div class="graph-svg-area" role="img" aria-label="Walk animation playing, step 2 of 3">
+    <div class="graph-canvas">
+      <!-- Node 1: step 1 already passed (dim highlight) -->
+      <div class="node-column">
+        <div class="kill-chain-chip stage-initial">Initial Access</div>
+        <div class="node-wrap">
+          <div class="node-circle" style="opacity:0.6;border-color:#DC2626;">
+            <span class="node-icon">&#128100;</span>
+          </div>
+          <div class="node-label" style="color:#777;">admin@contoso.com</div>
+        </div>
+      </div>
+      <!-- Edge 1: passed, dim -->
+      <div class="edge-column">
+        <div class="edge-wrap">
+          <div class="edge-label" style="color:#555;">MemberOf</div>
+          <div class="edge-line" style="opacity:0.5;"></div>
+          <div class="mitre-tag" style="opacity:0.5;">T1078.004</div>
+        </div>
+      </div>
+      <!-- Node 2: ACTIVE STEP -- full brightness + glow ring -->
+      <div class="node-column">
+        <div class="kill-chain-chip stage-escalation">Privilege Escalation</div>
+        <div class="node-wrap">
+          <div class="node-rect" style="border-color:#E17036;box-shadow:0 0 0 6px rgba(225,112,54,0.35);">
+            <span class="node-icon">&#128101;</span>
+          </div>
+          <div class="node-label" style="color:#fff;font-weight:600;">IT-Admins</div>
+          <div class="chip chip-high"><span class="shape-triangle"></span>High</div>
+        </div>
+      </div>
+      <!-- Edge 2 + Node 3: not yet reached, very dim -->
+      <div class="edge-column">
+        <div class="edge-wrap">
+          <div class="edge-label" style="color:#333;">HasRole (active)</div>
+          <div class="edge-line" style="opacity:0.2;"></div>
+        </div>
+      </div>
+      <div class="node-column">
+        <div class="kill-chain-chip stage-takeover" style="opacity:0.25;">Takeover</div>
+        <div class="node-wrap">
+          <div class="node-hexagon" style="opacity:0.25;border-color:#DC2626;display:flex;align-items:center;justify-content:center;">
+            <span class="node-icon" style="font-size:18px;">&#128274;</span>
+          </div>
+          <div class="node-label" style="color:#444;">Global Administrator</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="annotation">
+    Walk animation: WalkAnimation.tsx fires onStepChange(stepIndex) via plain setTimeout chain (800ms per step). No D3.
+    AttackPathGraph.tsx receives animationStep prop and passes it to each AttackNode/AttackEdge to determine highlight state.
+    When riskLabel === "Critical", autoPlay=true and the animation fires immediately on mount.
+    "Replay walk" button is disabled while animation is playing, re-enabled after onComplete fires.
+  </p>
+</div>
+
+<!-- IMPLEMENTATION NOTES -->
+<div class="spacer"></div>
+<div style="border:1px solid #2a2a2a;border-radius:8px;padding:16px;font-size:11px;color:#666;line-height:1.8;">
+  <strong style="color:#888;display:block;margin-bottom:8px;">Implementation Notes -- Libraries and APIs</strong>
+  <ul style="list-style:disc;padding-left:16px;">
+    <li><strong>Graph library: reagraph v4.21.5</strong> (already installed). Use <code>&lt;GraphCanvas&gt;</code> from "reagraph". Set <code>layoutType="left-right"</code> for LR DAG layout. No @dagrejs/dagre, no D3.</li>
+    <li><strong>Node mapping:</strong> Convert <code>path.nodes: AttackNode[]</code> to <code>NodePositionArgs[]</code>: <code>{ id: node.id, label: node.label, data: node }</code>. Pass to GraphCanvas <code>nodes</code> prop.</li>
+    <li><strong>Edge mapping:</strong> Convert <code>path.edges: AttackEdge[]</code> to <code>EdgePositionArgs[]</code>: <code>{ id: edge.id, source: edge.sourceId, target: edge.targetId, label: edge.label, data: edge }</code>. Pass to GraphCanvas <code>edges</code> prop.</li>
+    <li><strong>Custom node renderer:</strong> <code>renderNode={({ node, ...rest }) =&gt; &lt;AttackNode node={node.data} {...rest} /&gt;}</code>. AttackNode.tsx returns an SVG <code>&lt;g&gt;</code> element with the correct shape and severity border color for the entity type.</li>
+    <li><strong>Custom edge renderer:</strong> <code>renderEdge={({ edge, ...rest }) =&gt; &lt;AttackEdge edge={edge.data} {...rest} /&gt;}</code>. AttackEdge.tsx returns an SVG path with a CSS @keyframes glow-pulse on hot edges.</li>
+    <li><strong>Kill-chain chips and entity labels:</strong> These are positioned as HTML overlays outside the GraphCanvas SVG, using reagraph's <code>onNodePointerEnter</code> / <code>onNodePointerLeave</code> callbacks to get screen coordinates, or rendered as <code>&lt;foreignObject&gt;</code> within the custom renderNode SVG group.</li>
+    <li><strong>Node click:</strong> <code>onNodeClick={(node) =&gt; onNodeClick(node.data)}</code>. Detail panel opens (antd Drawer, placement="right", mask=false). Response within 300ms (SC-005) -- data is in client state, no network call.</li>
+    <li><strong>Edge click:</strong> <code>onEdgeClick={(edge) =&gt; onEdgeClick(edge.data)}</code>. Edge detail panel opens similarly.</li>
+    <li><strong>Walk animation:</strong> WalkAnimation.tsx uses <code>setTimeout</code> chain (800ms/step) + React <code>useState(animationStep)</code>. Each step calls <code>onStepChange(stepIndex)</code>. AttackPathGraph passes <code>animationStep</code> to renderNode/renderEdge to control highlight state. No external animation dependency.</li>
+    <li><strong>Path fade transitions:</strong> Wrap <code>&lt;GraphCanvas&gt;</code> in <code>&lt;AnimatePresence mode="wait"&gt;</code> from "motion". Use <code>&lt;motion.div key={currentPathIndex} initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }} transition={{ duration: 0.15 }}&gt;</code>. Requires <code>motion</code> v12.38.0 (already installed).</li>
+    <li><strong>Blast radius overlay:</strong> <code>&lt;motion.div initial={{ y:"100%" }} animate={{ y:0 }} exit={{ y:"100%" }} transition={{ duration:0.2 }}&gt;</code> inside <code>&lt;AnimatePresence&gt;</code>. Position: absolute, bottom:0, left:0, right:0 within graph container.</li>
+    <li><strong>AD filter:</strong> Before passing to GraphCanvas, filter: <code>nodes.filter(n =&gt; adFilterEnabled || n.engineId !== "active_directory")</code> and same for edges. reagraph re-layouts automatically.</li>
+    <li><strong>antd Switch:</strong> <code>&lt;Switch checked={adEnabled} onChange={onADToggle} aria-label="Toggle Active Directory integration in graph" /&gt;</code>. Only rendered when adIntegrationState === "integrated".</li>
+    <li><strong>View toggle:</strong> antd <code>&lt;Segmented&gt;</code> with options ["Attack", "Posture"]. On change: <code>setActiveView(value.toLowerCase())</code>. Attack section: <code>display: activeView==="attack" ? "block" : "none"</code>.</li>
+    <li><strong>Graph container a11y:</strong> Outer wrapper div: <code>role="img"</code>, <code>aria-label="Attack path graph from {entryNodeLabel} to Global Administrator"</code>. Keyboard: each node tabIndex=0, onKeyDown checks Enter/Space to trigger click. Path cycler: aria-live="polite".</li>
+    <li><strong>Hot edge pulse:</strong> CSS <code>@keyframes glow-pulse</code> applied as a CSS class on edge elements with <code>isHot: true</code>. Runs infinitely. No JS animation loop.</li>
+    <li><strong>Graph min-height:</strong> 360px. On screens below 768px: horizontal overflow-auto. Graph does not collapse.</li>
+  </ul>
+</div>
+
+</body>
+</html>

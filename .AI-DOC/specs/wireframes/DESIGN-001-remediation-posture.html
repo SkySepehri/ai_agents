@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DESIGN-001 Wireframe: Remediation List + Posture View</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f0f0f; color: #e5e5e5; padding: 24px; }
+  .annotation { font-size: 10px; color: #555; font-style: italic; margin-top: 8px; }
+  .state-title { font-size: 12px; font-weight: 600; color: #888; margin-bottom: 12px; padding: 4px 10px; background: #1a1a1a; border-radius: 4px; display: inline-block; }
+  .spacer { height: 40px; }
+  h1 { font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  h2 { font-size: 12px; color: #666; margin-bottom: 16px; font-weight: 600; }
+  .card { background: linear-gradient(170deg, #3B3544 0%, #151517 50%, #26222E 100%); border-radius: 16px; padding: 20px; filter: drop-shadow(0px 0px 1px rgba(255,255,255,0.3)); }
+
+  /* Chips */
+  .chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+  .chip-critical { background: rgba(220,38,38,0.2); color: #DC2626; border: 1px solid rgba(220,38,38,0.4); }
+  .chip-high { background: rgba(225,112,54,0.2); color: #E17036; border: 1px solid rgba(225,112,54,0.4); }
+  .chip-medium { background: rgba(255,220,0,0.15); color: #FFDC00; border: 1px solid rgba(255,220,0,0.35); }
+  .shape-square { width: 7px; height: 7px; background: currentColor; display: inline-block; flex-shrink: 0; }
+  .shape-triangle { width: 0; height: 0; border-left: 3.5px solid transparent; border-right: 3.5px solid transparent; border-bottom: 7px solid currentColor; display: inline-block; flex-shrink: 0; }
+  .shape-circle { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; flex-shrink: 0; }
+  .mitre-tag { font-size: 8px; background: rgba(24,144,255,0.15); color: #1890ff; border: 1px solid rgba(24,144,255,0.3); border-radius: 3px; padding: 2px 6px; white-space: nowrap; }
+  .delta-chip { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 4px; font-size: 11px; font-weight: 700; background: rgba(220,38,38,0.15); color: #DC2626; border: 1px solid rgba(220,38,38,0.3); white-space: nowrap; }
+
+  /* Remediation list */
+  .remediation-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .remediation-title { font-size: 13px; font-weight: 600; color: #bbb; }
+  .current-score-tag { font-size: 11px; color: #DC2626; font-weight: 600; }
+  .remediation-list { display: flex; flex-direction: column; gap: 8px; }
+  .remediation-item { background: rgba(255,255,255,0.03); border: 1px solid #252525; border-radius: 10px; overflow: hidden; }
+  .remediation-item-header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer; }
+  .remediation-item-header:hover { background: rgba(255,255,255,0.02); }
+  .rank-badge { width: 24px; height: 24px; border-radius: 50%; background: rgba(24,144,255,0.15); border: 1px solid rgba(24,144,255,0.3); color: #1890ff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .remediation-item-title { flex: 1; font-size: 12px; font-weight: 500; color: #ddd; line-height: 1.4; }
+  .expand-icon { color: #555; font-size: 12px; flex-shrink: 0; transition: transform 0.2s; }
+  .expand-icon-open { transform: rotate(180deg); }
+
+  /* Expanded item body */
+  .remediation-item-body { padding: 0 14px 14px 14px; border-top: 1px solid #1e1e1e; margin-top: 0; }
+  .item-desc { font-size: 11px; color: #888; line-height: 1.6; margin-top: 10px; margin-bottom: 10px; }
+  .item-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
+  .meta-label { font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: 0.06em; }
+  .path-badge { font-size: 9px; background: rgba(255,255,255,0.06); border: 1px solid #333; border-radius: 3px; padding: 1px 6px; color: #888; }
+  .score-after { font-size: 11px; color: #aaa; }
+  .score-after-val { font-weight: 700; color: #E17036; }
+  .affected-identity { font-size: 10px; color: #777; }
+
+  /* Posture view */
+  .posture-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .posture-panel { background: rgba(255,255,255,0.03); border: 1px solid #252525; border-radius: 12px; padding: 16px; }
+  .posture-panel-title { font-size: 12px; font-weight: 600; color: #bbb; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .framework-badge { font-size: 8px; background: rgba(24,144,255,0.15); color: #1890ff; border: 1px solid rgba(24,144,255,0.3); border-radius: 3px; padding: 1px 6px; }
+
+  /* Progress bars */
+  .progress-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+  .progress-label-row { display: flex; align-items: center; justify-content: space-between; }
+  .progress-function { font-size: 11px; color: #bbb; }
+  .progress-count { font-size: 10px; color: #666; }
+  .progress-bar-track { height: 6px; background: #252525; border-radius: 3px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; border-radius: 3px; }
+  .bar-green { background: #52C41A; }
+  .bar-yellow { background: #FFDC00; }
+  .bar-red { background: #DC2626; }
+  .bar-gray { background: #444; }
+  .bar-unavailable { font-size: 10px; color: #555; font-style: italic; }
+
+  /* Essential Eight maturity dots */
+  .e8-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .e8-strategy { flex: 1; font-size: 10px; color: #bbb; line-height: 1.3; }
+  .e8-dots { display: flex; gap: 4px; align-items: center; }
+  .e8-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .e8-dot-filled { background: #1890ff; }
+  .e8-dot-target { background: transparent; border: 2px solid #1890ff; }
+  .e8-dot-empty { background: #252525; border: 1px solid #333; }
+  .e8-not-assessed { font-size: 9px; color: #444; font-style: italic; }
+  .e8-maturity-label { font-size: 9px; color: #666; min-width: 30px; text-align: right; }
+
+  /* View toggle (shown in context) */
+  .view-toggle { display: flex; background: rgba(255,255,255,0.05); border-radius: 8px; padding: 3px; gap: 2px; margin-bottom: 16px; width: fit-content; }
+  .toggle-btn { padding: 5px 14px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; border: none; }
+  .toggle-active { background: #1890ff; color: #fff; }
+  .toggle-inactive { background: transparent; color: #888; }
+</style>
+</head>
+<body>
+
+<h1>DESIGN-001 Wireframe: Remediation List + Posture View</h1>
+<p style="font-size:11px;color:#555;margin-bottom:24px;">
+  Remediation list (collapsed + expanded item states). Posture view (all 3 framework panels: NIST CSF 2.0, ISO 27001, Essential Eight).
+  Both sections are client-portal-only. MSSP portal does NOT show these views.
+</p>
+
+<!-- REMEDIATION LIST -->
+<div class="state-title">State 1: Remediation List (ranked by risk delta, item 1 expanded)</div>
+<div class="card">
+  <div class="remediation-section-header">
+    <div class="remediation-title">Prioritized Remediation Roadmap</div>
+    <div class="current-score-tag">Current score: 82 (Critical)</div>
+  </div>
+
+  <div class="remediation-list">
+
+    <!-- Item 1: Expanded -->
+    <div class="remediation-item">
+      <div class="remediation-item-header">
+        <div class="rank-badge">1</div>
+        <span class="chip chip-critical"><span class="shape-square"></span>Critical</span>
+        <div class="remediation-item-title">Reset leaked admin credential and enforce phishing-resistant MFA</div>
+        <div class="delta-chip">-15 pts</div>
+        <div class="expand-icon expand-icon-open">&#8743;</div>
+      </div>
+      <div class="remediation-item-body">
+        <div class="item-desc">
+          admin@contoso.com credentials found on dark web marketplace 14 days ago. This account has a direct 3-hop path to Global Administrator through the IT-Admins group. Immediate remediation severs 2 distinct attack paths.
+        </div>
+        <div class="item-meta">
+          <div>
+            <div class="meta-label" style="margin-bottom:3px;">MITRE Reference</div>
+            <span class="mitre-tag">T1589.001 Credentials</span>
+          </div>
+          <div>
+            <div class="meta-label" style="margin-bottom:3px;">Paths severed</div>
+            <span class="path-badge">path-001</span>
+            <span class="path-badge">path-003</span>
+          </div>
+          <div>
+            <div class="meta-label" style="margin-bottom:3px;">Engine</div>
+            <span style="font-size:10px;color:#888;">Identity Intelligence</span>
+          </div>
+          <div>
+            <div class="meta-label" style="margin-bottom:3px;">Affected identity</div>
+            <span class="affected-identity">admin@contoso.com</span>
+          </div>
+        </div>
+        <div style="margin-top:10px;padding:8px 12px;background:rgba(220,38,38,0.06);border-radius:6px;border:1px solid rgba(220,38,38,0.2);">
+          <span class="score-after">Score after fix: </span><span class="score-after-val">67</span><span class="score-after"> (High)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Item 2: Collapsed -->
+    <div class="remediation-item">
+      <div class="remediation-item-header">
+        <div class="rank-badge">2</div>
+        <span class="chip chip-high"><span class="shape-triangle"></span>High</span>
+        <div class="remediation-item-title">Remove nested admin group membership for IT-Admins</div>
+        <div class="delta-chip">-8 pts</div>
+        <div class="expand-icon">&#8744;</div>
+      </div>
+    </div>
+
+    <!-- Item 3: Collapsed -->
+    <div class="remediation-item">
+      <div class="remediation-item-header">
+        <div class="rank-badge">3</div>
+        <span class="chip chip-critical"><span class="shape-square"></span>Critical</span>
+        <div class="remediation-item-title">Convert standing Global Admin assignments to PIM-eligible</div>
+        <div class="delta-chip">-7 pts</div>
+        <div class="expand-icon">&#8744;</div>
+      </div>
+    </div>
+
+    <!-- Item 4: Collapsed -->
+    <div class="remediation-item">
+      <div class="remediation-item-header">
+        <div class="rank-badge">4</div>
+        <span class="chip chip-high"><span class="shape-triangle"></span>High</span>
+        <div class="remediation-item-title">Restrict Application.ReadWrite.All permission to scoped consent</div>
+        <div class="delta-chip">-5 pts</div>
+        <div class="expand-icon">&#8744;</div>
+      </div>
+    </div>
+
+    <!-- Item 5: Collapsed (medium) -->
+    <div class="remediation-item">
+      <div class="remediation-item-header">
+        <div class="rank-badge">5</div>
+        <span class="chip chip-medium"><span class="shape-circle"></span>Medium</span>
+        <div class="remediation-item-title">Enable Conditional Access policy for all admin accounts</div>
+        <div class="delta-chip" style="background:rgba(225,112,54,0.12);color:#E17036;border-color:rgba(225,112,54,0.3);">-3 pts</div>
+        <div class="expand-icon">&#8744;</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<p class="annotation">
+  Items pre-sorted by API (highest riskDeltaPts first). Frontend renders in received order without re-sorting.
+  Rank badge: circular, antd brand blue (#1890ff). Delta chip: red, bold, "-N pts" format.
+  Expanded item: antd Collapse panel. Only one expanded at a time (accordion behavior).
+  Loading state: 3 skeleton rows. Empty state: "No remediation actions identified."
+</p>
+
+<!-- POSTURE VIEW (after toggle click) -->
+<div class="spacer"></div>
+<div class="state-title">State 2: Posture View (user clicked "Posture" toggle -- Attack view hidden)</div>
+
+<!-- View toggle showing "Posture" active -->
+<div class="view-toggle">
+  <button class="toggle-btn toggle-inactive">Attack</button>
+  <button class="toggle-btn toggle-active">Posture</button>
+</div>
+<p class="annotation" style="margin-bottom:16px;">Toggle is instant CSS display:none swap. SC-008: under 200ms. No network call. Both views' data was fetched on mount.</p>
+
+<div class="card">
+  <div style="font-size:13px;font-weight:600;color:#bbb;margin-bottom:16px;">Compliance Posture</div>
+
+  <div class="posture-grid">
+
+    <!-- NIST CSF 2.0 Panel -->
+    <div class="posture-panel">
+      <div class="posture-panel-title">
+        NIST CSF 2.0
+        <span class="framework-badge">Framework</span>
+      </div>
+
+      <div class="progress-row">
+        <div class="progress-label-row">
+          <span class="progress-function">Govern</span>
+          <span class="progress-count">4 / 6</span>
+        </div>
+        <div class="progress-bar-track"><div class="progress-bar-fill bar-yellow" style="width:66.7%;"></div></div>
+      </div>
+      <div class="progress-row">
+        <div class="progress-label-row">
+          <span class="progress-function">Identify</span>
+          <span class="progress-count">8 / 12</span>
+        </div>
+        <div class="progress-bar-track"><div class="progress-bar-fill bar-yellow" style="width:66.7%;"></div></div>
+      </div>
+      <div class="progress-row">
+        <div class="progress-label-row">
+          <span class="progress-function">Protect</span>
+          <span class="progress-count">10 / 15</span>
+        </div>
+        <div class="progress-bar-track"><div class="progress-bar-fill bar-yellow" style="width:66.7%;"></div></div>
+      </div>
+      <div class="progress-row">
+        <div class="progress-label-row">
+          <span class="progress-function">Detect</span>
+          <span class="progress-count">3 / 8</span>
+        </div>
+        <div class="progress-bar-track"><div class="progress-bar-fill bar-red" style="width:37.5%;"></div></div>
+      </div>
+      <div class="progress-row">
+        <div class="progress-label-row">
+          <span class="progress-function">Respond</span>
+          <span class="progress-count">2 / 6</span>
+        </div>
+        <div class="progress-bar-track"><div class="progress-bar-fill bar-red" style="width:33.3%;"></div></div>
+      </div>
+
+      <div style="font-size:9px;color:#444;margin-top:10px;font-style:italic;">Coverage % per CSF function. Green &ge;70%, Yellow 40-69%, Red &lt;40%.</div>
+    </div>
+
+    <!-- ISO 27001 Panel -->
+    <div class="posture-panel">
+      <div class="posture-panel-title">
+        ISO/IEC 27001:2022
+        <span class="framework-badge">Annex A</span>
+      </div>
+
+      <div class="progress-row">
+        <div class="progress-label-row">
+          <span class="progress-function" style="font-size:10px;">A.5 Organizational</span>
+          <span class="progress-count">7 / 10</span>
+        </div>
+        <div class="progress-bar-track"><div class="progress-bar-fill bar-green" style="width:70%;"></div></div>
+      </div>
+      <div class="progress-row">
+        <div class="progress-label-row">
+          <span class="progress-function" style="font-size:10px;">A.6 People</span>
+          <span class="progress-count">3 / 5</span>
+        </div>
+        <div class="progress-bar-track"><div class="progress-bar-fill bar-yellow" style="width:60%;"></div></div>
+      </div>
+      <div class="progress-row">
+        <div class="progress-label-row">
+          <span class="progress-function" style="font-size:10px;">A.7 Physical</span>
+          <span class="progress-count" style="font-style:italic;color:#444;">Not assessed</span>
+        </div>
+        <div class="bar-unavailable">Not assessed by BLA</div>
+      </div>
+      <div class="progress-row">
+        <div class="progress-label-row">
+          <span class="progress-function" style="font-size:10px;">A.8 Technological</span>
+          <span class="progress-count">9 / 15</span>
+        </div>
+        <div class="progress-bar-track"><div class="progress-bar-fill bar-yellow" style="width:60%;"></div></div>
+      </div>
+
+      <div style="font-size:9px;color:#444;margin-top:10px;font-style:italic;">Sections not assessable by BLA shown as "Not assessed."</div>
+    </div>
+
+    <!-- Essential Eight Panel -->
+    <div class="posture-panel">
+      <div class="posture-panel-title">
+        Essential Eight
+        <span class="framework-badge">ASD</span>
+      </div>
+
+      <!-- Strategy rows -->
+      <div class="e8-row">
+        <div class="e8-strategy">Restrict admin privileges</div>
+        <div class="e8-dots">
+          <div class="e8-dot e8-dot-filled" title="ML1 achieved"></div>
+          <div class="e8-dot e8-dot-empty"></div>
+          <div class="e8-dot e8-dot-target" title="ML3 target"></div>
+          <div class="e8-dot e8-dot-empty"></div>
+        </div>
+        <div class="e8-maturity-label">ML1/3</div>
+      </div>
+      <div class="e8-row">
+        <div class="e8-strategy">Multi-factor authentication</div>
+        <div class="e8-dots">
+          <div class="e8-dot e8-dot-filled"></div>
+          <div class="e8-dot e8-dot-filled"></div>
+          <div class="e8-dot e8-dot-target" title="ML3 target"></div>
+          <div class="e8-dot e8-dot-empty"></div>
+        </div>
+        <div class="e8-maturity-label">ML2/3</div>
+      </div>
+      <div class="e8-row">
+        <div class="e8-strategy">MS Office macro settings</div>
+        <div class="e8-dots">
+          <div class="e8-dot e8-dot-filled"></div>
+          <div class="e8-dot e8-dot-filled"></div>
+          <div class="e8-dot e8-dot-target" title="ML3 target"></div>
+          <div class="e8-dot e8-dot-empty"></div>
+        </div>
+        <div class="e8-maturity-label">ML2/3</div>
+      </div>
+      <div class="e8-row">
+        <div class="e8-strategy">User application hardening</div>
+        <div class="e8-dots">
+          <div class="e8-dot e8-dot-filled"></div>
+          <div class="e8-dot e8-dot-target" title="ML2 target"></div>
+          <div class="e8-dot e8-dot-empty"></div>
+          <div class="e8-dot e8-dot-empty"></div>
+        </div>
+        <div class="e8-maturity-label">ML1/2</div>
+      </div>
+      <div class="e8-row">
+        <div class="e8-strategy">Patch applications</div>
+        <div class="e8-dots">
+          <div class="e8-dot e8-dot-filled"></div>
+          <div class="e8-dot e8-dot-target" title="ML2 target"></div>
+          <div class="e8-dot e8-dot-empty"></div>
+          <div class="e8-dot e8-dot-empty"></div>
+        </div>
+        <div class="e8-maturity-label">ML1/2</div>
+      </div>
+      <div class="e8-row">
+        <div class="e8-strategy">Application control</div>
+        <span class="e8-not-assessed">Not assessed by BLA</span>
+      </div>
+      <div class="e8-row">
+        <div class="e8-strategy">Patch operating systems</div>
+        <span class="e8-not-assessed">Not assessed by BLA</span>
+      </div>
+      <div class="e8-row">
+        <div class="e8-strategy">Regular backups</div>
+        <span class="e8-not-assessed">Not assessed by BLA</span>
+      </div>
+
+      <div style="font-size:9px;color:#444;margin-top:8px;font-style:italic;">Dots: filled=achieved, ring=target, empty=gap. Strategies BLA cannot assess shown as "Not assessed."</div>
+    </div>
+  </div>
+</div>
+<p class="annotation">
+  Posture view is hidden (display:none) when Attack view is active. No unmounting -- data stays in memory for instant swap back.
+  NISTCSFPanel uses antd Progress component (percent={coveragePercent}). Color set by custom strokeColor prop.
+  EssentialEight dots: filled circles for currentMaturityLevel, target-ring circle for targetMaturityLevel, empty for gaps. ML0-ML3 = 4 dot positions.
+  "Data unavailable" shown per framework item when posture API returns missing data for that subcategory.
+</p>
+
+<!-- STATE 3: Posture panel -- Data Unavailable -->
+<div class="spacer"></div>
+<div class="state-title">State 3: Posture Panel -- Data Unavailable (engine error or not connected)</div>
+<div class="card" style="max-width:300px;">
+  <div class="posture-panel-title">NIST CSF 2.0</div>
+  <div class="progress-row">
+    <div class="progress-label-row">
+      <span class="progress-function">Govern</span>
+    </div>
+    <div class="bar-unavailable">Data unavailable</div>
+  </div>
+  <div class="progress-row">
+    <div class="progress-label-row">
+      <span class="progress-function">Identify</span>
+    </div>
+    <div class="bar-unavailable">Data unavailable</div>
+  </div>
+</div>
+<p class="annotation">Per UW error state: "Posture view engine returned an error -- affected framework bar shows 'Data unavailable' instead of a percentage."</p>
+
+<!-- IMPLEMENTATION NOTES -->
+<div class="spacer"></div>
+<div style="border:1px solid #2a2a2a;border-radius:8px;padding:16px;font-size:11px;color:#666;line-height:1.8;">
+  <strong style="color:#888;display:block;margin-bottom:8px;">Implementation Notes</strong>
+  <ul style="list-style:disc;padding-left:16px;">
+    <li>Remediation items: antd Collapse with accordion prop. Each panel is a RemediationItem component. Collapse header contains rank badge + severity chip + title + delta chip + expand icon.</li>
+    <li>Risk delta chips: negative numbers always. Format: "-N pts" (string). Color: severity of the item's severity field (Critical=red, High=orange, Medium=yellow). Do NOT show positive deltas.</li>
+    <li>Paths severed badges: path IDs from the API (e.g., "path-001"). If more than 3 paths are severed, show "path-001, path-002 +N more".</li>
+    <li>Posture view layout: 3-column grid on desktop (min-width 1024px). On tablet (768px-1023px): 1-column stacked. On mobile: 1-column.</li>
+    <li>NIST CSF function labels: "Govern", "Identify", "Protect", "Detect", "Respond" -- use these exact labels from the API response keys.</li>
+    <li>Essential Eight ML dots: 4 positions (ML0, ML1, ML2, ML3). Position 0 is always the leftmost dot. Fill dots up to currentMaturityLevel. Draw target ring at targetMaturityLevel position. If target == current, the filled dot also gets a ring.</li>
+    <li>Essential Eight strategies with assessed=false: show strategy name + "Not assessed by BLA" text. Do NOT render dots for unassessed strategies.</li>
+    <li>antd Progress component: use strokeColor prop to set bar color based on coveragePercent. Thresholds: >=70% -> #52C41A, 40-69% -> #FFDC00, <40% -> #DC2626.</li>
+    <li>Posture data is fetched on mount (usePosture hook), not on toggle click. Toggle is pure CSS visibility swap.</li>
+  </ul>
+</div>
+
+</body>
+</html>

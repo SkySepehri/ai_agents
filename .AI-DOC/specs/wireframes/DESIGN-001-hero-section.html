@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DESIGN-001 Wireframe: Hero Section</title>
+<style>
+  /* Base */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f0f0f; color: #e5e5e5; padding: 24px; }
+  h1 { font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  h2 { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 16px; }
+  .section-label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; border-bottom: 1px solid #222; padding-bottom: 6px; }
+  .state-row { margin-bottom: 32px; }
+  .annotation { font-size: 10px; color: #555; font-style: italic; margin-top: 6px; }
+  .card { background: linear-gradient(-170deg, #3B3544 0%, #151517 50%, #26222E 100%); border-radius: 16px; padding: 20px; filter: drop-shadow(0px 0px 1px rgba(255,255,255,0.3)); }
+
+  /* Score ring simulation */
+  .hero-grid { display: grid; grid-template-columns: 220px 1fr; gap: 16px; }
+  .score-ring-container { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .score-ring { width: 140px; height: 140px; position: relative; }
+  .score-ring svg { width: 100%; height: 100%; }
+  .score-ring-inner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+  .score-value { font-size: 36px; font-weight: 700; line-height: 1; }
+  .score-label { font-size: 12px; font-weight: 600; margin-top: 4px; }
+  .score-ring-critical .score-value { color: #DC2626; }
+  .score-ring-critical .score-label { color: #DC2626; }
+  .score-ring-high .score-value { color: #E17036; }
+  .score-ring-high .score-label { color: #E17036; }
+  .score-ring-low .score-value { color: #52C41A; }
+  .score-ring-low .score-label { color: #52C41A; }
+
+  /* Verdict text */
+  .verdict-text { font-size: 14px; color: #aaa; font-style: italic; line-height: 1.6; margin-bottom: 12px; }
+
+  /* KPI cluster */
+  .kpi-cluster { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 12px; }
+  .kpi-card { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 12px 10px; text-align: center; border: 1px solid #2a2a2a; }
+  .kpi-card-alarm { border-color: rgba(220,38,38,0.4); background: rgba(220,38,38,0.08); }
+  .kpi-value { font-size: 28px; font-weight: 700; line-height: 1; }
+  .kpi-value-alarm { color: #DC2626; }
+  .kpi-value-normal { color: #e5e5e5; }
+  .kpi-unit { font-size: 10px; color: #888; margin-top: 2px; }
+  .kpi-label { font-size: 10px; color: #666; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* Meta row */
+  .meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; border-top: 1px solid #292929; padding-top: 14px; }
+  .meta-item-label { font-size: 11px; color: #666; margin-bottom: 2px; }
+  .meta-item-value { font-size: 11px; color: #ddd; }
+
+  /* Skeleton state */
+  .skeleton { background: linear-gradient(90deg, #252525 25%, #2f2f2f 50%, #252525 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  .skeleton-ring { width: 140px; height: 140px; border-radius: 50%; }
+  .skeleton-line { height: 12px; margin-bottom: 6px; }
+  .skeleton-kpi { height: 68px; border-radius: 10px; }
+
+  /* Severity chips */
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+  .chip-critical { background: rgba(220,38,38,0.2); color: #DC2626; border: 1px solid rgba(220,38,38,0.4); }
+  .chip-high { background: rgba(225,112,54,0.2); color: #E17036; border: 1px solid rgba(225,112,54,0.4); }
+  .chip-shape { width: 8px; height: 8px; display: inline-block; }
+  .shape-square { background: currentColor; width: 8px; height: 8px; }
+  .shape-triangle { width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-bottom: 8px solid currentColor; }
+
+  /* Section spacer */
+  .spacer { height: 40px; }
+  .state-title { font-size: 12px; font-weight: 600; color: #888; margin-bottom: 12px; padding: 4px 10px; background: #1a1a1a; border-radius: 4px; display: inline-block; }
+</style>
+</head>
+<body>
+
+<h1>DESIGN-001 Wireframe: Hero Section</h1>
+<p style="font-size:11px;color:#555;margin-bottom:24px;">
+  Shows the score ring (ECharts animated ring), verdict text, KPI cluster, and tenant metadata across three states.
+  <br>Dark theme matches the existing BreachLikelihood.tsx card gradient style.
+</p>
+
+<!-- STATE 1: CRITICAL SCORE -->
+<div class="state-row">
+  <div class="state-title">State 1: Critical Score (riskScore=82, riskLabel="Critical")</div>
+  <div class="card">
+    <div class="hero-grid">
+
+      <!-- Left: Score ring + meta -->
+      <div>
+        <div style="font-size:11px;color:#777;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Risk Score
+        </div>
+
+        <div class="score-ring-container">
+          <div class="score-ring score-ring-critical">
+            <svg viewBox="0 0 140 140">
+              <!-- Background ring -->
+              <circle cx="70" cy="70" r="56" fill="none" stroke="#2a2a2a" stroke-width="14"/>
+              <!-- Score arc (82% = 295.2 deg) -->
+              <circle cx="70" cy="70" r="56" fill="none" stroke="#DC2626" stroke-width="14"
+                stroke-dasharray="352 352" stroke-dashoffset="63"
+                stroke-linecap="round" transform="rotate(-90 70 70)"/>
+            </svg>
+            <div class="score-ring-inner score-ring-critical">
+              <div class="score-value">82</div>
+              <div class="score-label">Critical</div>
+            </div>
+          </div>
+          <p class="annotation" style="text-align:center;">Animated count-up 0→82 over 1.2s on mount</p>
+        </div>
+
+        <div class="meta-grid">
+          <div>
+            <div class="meta-item-label">Tenant</div>
+            <div class="meta-item-value">contoso.onmicrosoft.com</div>
+          </div>
+          <div>
+            <div class="meta-item-label">Organization</div>
+            <div class="meta-item-value">Contoso Ltd</div>
+          </div>
+          <div>
+            <div class="meta-item-label">License</div>
+            <div class="meta-item-value">Entra P2</div>
+          </div>
+          <div>
+            <div class="meta-item-label">Assessment Date</div>
+            <div class="meta-item-value">18 Aug 2026</div>
+          </div>
+          <div>
+            <div class="meta-item-label">Number of Users</div>
+            <div class="meta-item-value">1,247</div>
+          </div>
+          <div>
+            <div class="meta-item-label">Powered By</div>
+            <div class="meta-item-value">Dela Security</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Verdict text + KPI cluster -->
+      <div>
+        <div style="font-size:11px;color:#777;margin-bottom:8px;">Verdict</div>
+        <p class="verdict-text">
+          Your tenant is 3 hops from full takeover. 2 admin passwords are already circulating
+          on criminal marketplaces. 4 standing Global Admins are reachable without MFA bypass.
+        </p>
+
+        <div style="font-size:11px;color:#777;margin-bottom:8px;">Key Metrics</div>
+        <div class="kpi-cluster">
+          <div class="kpi-card kpi-card-alarm">
+            <div class="kpi-value kpi-value-alarm">3</div>
+            <div class="kpi-unit">hops</div>
+            <div class="kpi-label">Time to<br>Global Admin</div>
+          </div>
+          <div class="kpi-card kpi-card-alarm">
+            <div class="kpi-value kpi-value-alarm">2</div>
+            <div class="kpi-unit">found</div>
+            <div class="kpi-label">Leaked Admin<br>Passwords</div>
+          </div>
+          <div class="kpi-card kpi-card-alarm">
+            <div class="kpi-value kpi-value-alarm">4</div>
+            <div class="kpi-unit">active</div>
+            <div class="kpi-label">Standing<br>Global Admins</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-value kpi-value-normal">18</div>
+            <div class="kpi-unit">of 22</div>
+            <div class="kpi-label">Admins<br>with MFA</div>
+          </div>
+          <div class="kpi-card kpi-card-alarm">
+            <div class="kpi-value kpi-value-alarm">5</div>
+            <div class="kpi-unit">paths</div>
+            <div class="kpi-label">Paths to<br>Takeover</div>
+          </div>
+        </div>
+        <p class="annotation">Alarm coloring (red tint + red value) when: TTGA &lt;=4, LeakedPasswords &gt;0, StandingGAs &gt;2, Paths &gt;0</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATE 2: LOW SCORE (no alarms) -->
+<div class="spacer"></div>
+<div class="state-row">
+  <div class="state-title">State 2: Low Score (riskScore=18, riskLabel="Low") -- No alarm coloring</div>
+  <div class="card">
+    <div class="hero-grid">
+      <div>
+        <div style="font-size:11px;color:#777;margin-bottom:8px;">Risk Score</div>
+        <div class="score-ring-container">
+          <div class="score-ring score-ring-low">
+            <svg viewBox="0 0 140 140">
+              <circle cx="70" cy="70" r="56" fill="none" stroke="#2a2a2a" stroke-width="14"/>
+              <circle cx="70" cy="70" r="56" fill="none" stroke="#52C41A" stroke-width="14"
+                stroke-dasharray="64 352" stroke-dashoffset="0"
+                stroke-linecap="round" transform="rotate(-90 70 70)"/>
+            </svg>
+            <div class="score-ring-inner score-ring-low">
+              <div class="score-value">18</div>
+              <div class="score-label">Low</div>
+            </div>
+          </div>
+        </div>
+        <div class="meta-grid">
+          <div><div class="meta-item-label">Tenant</div><div class="meta-item-value">fabrikam.onmicrosoft.com</div></div>
+          <div><div class="meta-item-label">License</div><div class="meta-item-value">Entra P1</div></div>
+          <div><div class="meta-item-label">Users</div><div class="meta-item-value">320</div></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#777;margin-bottom:8px;">Verdict</div>
+        <p class="verdict-text">
+          Your tenant shows low breach likelihood. No leaked credentials or critical attack paths were detected in this assessment.
+        </p>
+        <div class="kpi-cluster">
+          <div class="kpi-card">
+            <div class="kpi-value kpi-value-normal">0</div>
+            <div class="kpi-unit">hops</div>
+            <div class="kpi-label">Time to<br>Global Admin</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-value kpi-value-normal">0</div>
+            <div class="kpi-unit">found</div>
+            <div class="kpi-label">Leaked Admin<br>Passwords</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-value kpi-value-normal">1</div>
+            <div class="kpi-unit">active</div>
+            <div class="kpi-label">Standing<br>Global Admins</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-value kpi-value-normal">5</div>
+            <div class="kpi-unit">of 5</div>
+            <div class="kpi-label">Admins<br>with MFA</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-value kpi-value-normal">0</div>
+            <div class="kpi-unit">paths</div>
+            <div class="kpi-label">Paths to<br>Takeover</div>
+          </div>
+        </div>
+        <p class="annotation">No alarm coloring applied when all admins have MFA and no leaked credentials exist (UW Story 2 acceptance scenario)</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATE 3: LOADING (skeleton) -->
+<div class="spacer"></div>
+<div class="state-row">
+  <div class="state-title">State 3: Loading / Skeleton</div>
+  <div class="card">
+    <div class="hero-grid">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+        <div class="skeleton skeleton-ring"></div>
+        <div class="skeleton skeleton-line" style="width:80px;"></div>
+        <div class="skeleton skeleton-line" style="width:120px;"></div>
+      </div>
+      <div>
+        <div class="skeleton skeleton-line" style="width:100%;margin-bottom:8px;"></div>
+        <div class="skeleton skeleton-line" style="width:90%;margin-bottom:8px;"></div>
+        <div class="skeleton skeleton-line" style="width:70%;margin-bottom:16px;"></div>
+        <div class="kpi-cluster">
+          <div class="skeleton skeleton-kpi"></div>
+          <div class="skeleton skeleton-kpi"></div>
+          <div class="skeleton skeleton-kpi"></div>
+          <div class="skeleton skeleton-kpi"></div>
+          <div class="skeleton skeleton-kpi"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ANNOTATION NOTES -->
+<div class="spacer"></div>
+<div style="border:1px solid #2a2a2a;border-radius:8px;padding:16px;font-size:11px;color:#666;line-height:1.8;">
+  <strong style="color:#888;display:block;margin-bottom:8px;">Implementation Notes</strong>
+  <ul style="list-style:disc;padding-left:16px;">
+    <li>ScoreRing.tsx uses ECharts gauge type. Replace the existing GaugeChart.tsx (Chart.js half-circle, no animation).</li>
+    <li>The ring is a full circle (360 degrees), not a half-circle. Inner text shows numeric score + risk label.</li>
+    <li>ECharts count-up animation: use <code>animationDuration</code> and <code>animationType: "linear"</code> with a data update from 0 to score on mount.</li>
+    <li>KPI alarm condition logic: ttgaHops &gt; 0 shows alarm; leakedAdminPasswords &gt; 0 shows alarm; standingGlobalAdmins &gt; 2 shows alarm; pathsToTakeover &gt; 0 shows alarm. adminsWithMfa is always neutral (informational).</li>
+    <li>Card gradient: <code>linear-gradient(-170deg, #3B3544 0%, #151517 50%, #26222E 100%)</code> -- matches existing BreachLikelihood.tsx gradientBoxLeftStyle.</li>
+    <li>Skeleton uses antd Skeleton.Input and Skeleton.Avatar, or the shimmer CSS class shown above.</li>
+    <li>When identities API returns 404: render existing "Assessing your Entra ID..." message. When 500: render error state with retry button.</li>
+  </ul>
+</div>
+
+</body>
+</html>

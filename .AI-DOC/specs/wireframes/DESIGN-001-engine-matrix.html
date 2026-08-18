@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DESIGN-001 Wireframe: Engine Matrix</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f0f0f; color: #e5e5e5; padding: 24px; }
+  .annotation { font-size: 10px; color: #555; font-style: italic; margin-top: 6px; }
+  .state-title { font-size: 12px; font-weight: 600; color: #888; margin-bottom: 12px; padding: 4px 10px; background: #1a1a1a; border-radius: 4px; display: inline-block; }
+  .spacer { height: 40px; }
+  h1 { font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .card { background: linear-gradient(170deg, #3B3544 0%, #151517 50%, #26222E 100%); border-radius: 16px; padding: 20px; filter: drop-shadow(0px 0px 1px rgba(255,255,255,0.3)); }
+
+  /* Matrix table */
+  .matrix-table { width: 100%; border-collapse: collapse; }
+  .matrix-table th { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 0.06em; padding: 8px 10px; text-align: left; border-bottom: 1px solid #252525; font-weight: 600; }
+  .matrix-table th.number-col { text-align: center; }
+  .matrix-table td { padding: 10px; border-bottom: 1px solid #1e1e1e; vertical-align: middle; }
+  .matrix-table tr:last-child td { border-bottom: none; }
+  .matrix-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .matrix-table td.number-col { text-align: center; }
+
+  /* Engine name cell */
+  .engine-name { font-size: 12px; font-weight: 600; color: #e5e5e5; }
+  .engine-weight { font-size: 9px; color: #555; }
+
+  /* Severity chips */
+  .chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 4px; font-size: 9px; font-weight: 600; cursor: pointer; }
+  .chip:hover { opacity: 0.8; }
+  .chip-critical { background: rgba(220,38,38,0.2); color: #DC2626; border: 1px solid rgba(220,38,38,0.4); }
+  .chip-high { background: rgba(225,112,54,0.2); color: #E17036; border: 1px solid rgba(225,112,54,0.4); }
+  .chip-medium { background: rgba(255,220,0,0.15); color: #FFDC00; border: 1px solid rgba(255,220,0,0.35); }
+  .chip-pass { background: rgba(82,196,26,0.1); color: #52C41A; border: 1px solid rgba(82,196,26,0.3); }
+  .shape-square { width: 7px; height: 7px; background: currentColor; display: inline-block; flex-shrink: 0; }
+  .shape-triangle { width: 0; height: 0; border-left: 3.5px solid transparent; border-right: 3.5px solid transparent; border-bottom: 7px solid currentColor; display: inline-block; flex-shrink: 0; }
+  .shape-circle { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; flex-shrink: 0; }
+  .shape-circle-outline { width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid currentColor; background: transparent; display: inline-block; flex-shrink: 0; }
+  .shape-check { font-size: 8px; }
+  .empty-cell { color: #333; font-size: 11px; }
+
+  /* Sub-score cell */
+  .sub-score { font-size: 14px; font-weight: 700; }
+  .sub-score-critical { color: #DC2626; }
+  .sub-score-high { color: #E17036; }
+  .sub-score-medium { color: #FFDC00; }
+  .sub-score-low { color: #52C41A; }
+
+  /* Drill-down panel (inline, below row) */
+  .drill-down-row td { padding: 0; background: rgba(24,144,255,0.04); border-bottom: 1px solid rgba(24,144,255,0.2); }
+  .drill-down-panel { padding: 16px 20px; border-left: 3px solid #1890ff; }
+  .drill-down-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .drill-down-title { font-size: 11px; font-weight: 600; color: #1890ff; }
+  .finding-list { display: flex; flex-direction: column; gap: 8px; }
+  .finding-item { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px 12px; border: 1px solid #252525; }
+  .finding-name { font-size: 11px; font-weight: 600; color: #ddd; margin-bottom: 4px; }
+  .finding-desc { font-size: 10px; color: #777; line-height: 1.5; }
+  .finding-meta { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+  .mitre-tag { font-size: 8px; background: rgba(24,144,255,0.15); color: #1890ff; border: 1px solid rgba(24,144,255,0.3); border-radius: 3px; padding: 1px 5px; }
+  .delta-tag { font-size: 9px; color: #DC2626; font-weight: 600; }
+
+  /* AD Upsell Banner */
+  .ad-upsell-row td { padding: 0; }
+  .ad-upsell-banner { display: flex; align-items: center; justify-content: space-between; padding: 10px 10px; background: linear-gradient(-170deg, #2a253a 0%, #1a171d 50%, #221f2a 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; margin: 6px 0; }
+  .ad-upsell-left { display: flex; align-items: center; gap: 10px; }
+  .ad-upsell-name { font-size: 12px; font-weight: 600; color: #bbb; }
+  .not-assessed-badge { font-size: 9px; color: #888; background: rgba(255,255,255,0.06); border: 1px solid #333; border-radius: 4px; padding: 2px 8px; }
+  .ad-upsell-right { display: flex; align-items: center; gap: 10px; }
+  .ad-upsell-text { font-size: 11px; color: #888; }
+  .learn-more-btn { font-size: 10px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14); border-radius: 6px; color: #bbb; padding: 4px 12px; cursor: pointer; }
+
+  /* AD Teaser Banner (hybrid signals) */
+  .ad-teaser { font-size: 11px; color: #FFDC00; background: rgba(255,220,0,0.08); border: 1px solid rgba(255,220,0,0.2); border-radius: 8px; padding: 8px 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+
+  /* Legend */
+  .severity-legend { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 9px; color: #666; }
+
+  /* Selected cell highlight */
+  .cell-selected { background: rgba(24,144,255,0.08); border-radius: 4px; }
+
+  /* Matrix header note */
+  .matrix-note { font-size: 9px; color: #555; margin-top: 8px; font-style: italic; }
+</style>
+</head>
+<body>
+
+<h1>DESIGN-001 Wireframe: Engine Matrix</h1>
+<p style="font-size:11px;color:#555;margin-bottom:24px;">
+  Shows the severity count matrix with per-engine sub-scores. Severity cells are clickable to open DrillDownPanel.
+  Four states: Normal, DrillDown open, AD Upsell (not integrated), AD Teaser (hybrid signals detected).
+</p>
+
+<!-- STATE 1: NORMAL ENGINE MATRIX -->
+<div class="state-title">State 1: Engine Matrix -- Normal (AD integrated, 4 engines + AD row)</div>
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div style="font-size:13px;font-weight:600;color:#bbb;">Assessment Engine Summary</div>
+  </div>
+
+  <!-- Severity legend -->
+  <div class="severity-legend">
+    <span style="font-size:9px;color:#444;margin-right:2px;">Severity:</span>
+    <div class="legend-item"><span style="width:8px;height:8px;background:#DC2626;display:inline-block;"></span> Critical</div>
+    <div class="legend-item"><span style="width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:8px solid #E17036;display:inline-block;"></span> High</div>
+    <div class="legend-item"><span style="width:8px;height:8px;border-radius:50%;background:#FFDC00;display:inline-block;"></span> Medium</div>
+    <div class="legend-item"><span style="width:8px;height:8px;border-radius:50%;border:2px solid #52C41A;background:transparent;display:inline-block;"></span> Low</div>
+    <span style="font-size:9px;color:#444;margin-left:8px;">Click a severity count to see findings</span>
+  </div>
+
+  <table class="matrix-table">
+    <thead>
+      <tr>
+        <th style="width:30%;">Engine</th>
+        <th class="number-col" style="width:10%;">Critical</th>
+        <th class="number-col" style="width:10%;">High</th>
+        <th class="number-col" style="width:10%;">Medium</th>
+        <th class="number-col" style="width:10%;">Pass</th>
+        <th class="number-col" style="width:15%;">Sub-Score</th>
+        <th class="number-col" style="width:15%;">Weight</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Identity Hygiene -->
+      <tr>
+        <td>
+          <div class="engine-name">Identity Hygiene</div>
+          <div class="engine-weight">Weight: 25</div>
+        </td>
+        <td class="number-col"><span class="chip chip-critical"><span class="shape-square"></span>3</span></td>
+        <td class="number-col"><span class="chip chip-high"><span class="shape-triangle"></span>12</span></td>
+        <td class="number-col"><span class="chip chip-medium"><span class="shape-circle"></span>8</span></td>
+        <td class="number-col"><span class="chip chip-pass"><span class="shape-check">&#10003;</span>5</span></td>
+        <td class="number-col"><span class="sub-score sub-score-critical">78</span></td>
+        <td class="number-col" style="font-size:11px;color:#666;">25 / 100</td>
+      </tr>
+      <!-- Platform Hygiene -->
+      <tr>
+        <td>
+          <div class="engine-name">Platform Hygiene</div>
+          <div class="engine-weight">Weight: 20</div>
+        </td>
+        <td class="number-col"><span class="chip chip-critical"><span class="shape-square"></span>1</span></td>
+        <td class="number-col"><span class="chip chip-high"><span class="shape-triangle"></span>7</span></td>
+        <td class="number-col"><span class="chip chip-medium"><span class="shape-circle"></span>15</span></td>
+        <td class="number-col"><span class="chip chip-pass"><span class="shape-check">&#10003;</span>10</span></td>
+        <td class="number-col"><span class="sub-score sub-score-high">65</span></td>
+        <td class="number-col" style="font-size:11px;color:#666;">20 / 100</td>
+      </tr>
+      <!-- Identity Intelligence -->
+      <tr>
+        <td>
+          <div class="engine-name">Identity Intelligence</div>
+          <div class="engine-weight">Weight: 20</div>
+        </td>
+        <td class="number-col cell-selected"><span class="chip chip-critical" style="outline:2px solid #1890ff;"><span class="shape-square"></span>5</span></td>
+        <td class="number-col"><span class="chip chip-high"><span class="shape-triangle"></span>20</span></td>
+        <td class="number-col"><span class="chip chip-medium"><span class="shape-circle"></span>3</span></td>
+        <td class="number-col"><span class="chip chip-pass"><span class="shape-check">&#10003;</span>2</span></td>
+        <td class="number-col"><span class="sub-score sub-score-critical">90</span></td>
+        <td class="number-col" style="font-size:11px;color:#666;">20 / 100</td>
+      </tr>
+      <!-- Microsoft 365 -->
+      <tr>
+        <td>
+          <div class="engine-name">Microsoft 365</div>
+          <div class="engine-weight">Weight: 15</div>
+        </td>
+        <td class="number-col"><span class="empty-cell">&mdash;</span></td>
+        <td class="number-col"><span class="chip chip-high"><span class="shape-triangle"></span>5</span></td>
+        <td class="number-col"><span class="chip chip-medium"><span class="shape-circle"></span>12</span></td>
+        <td class="number-col"><span class="chip chip-pass"><span class="shape-check">&#10003;</span>20</span></td>
+        <td class="number-col"><span class="sub-score sub-score-medium">45</span></td>
+        <td class="number-col" style="font-size:11px;color:#666;">15 / 100</td>
+      </tr>
+      <!-- Active Directory (integrated) -->
+      <tr>
+        <td>
+          <div class="engine-name">Active Directory</div>
+          <div class="engine-weight">Weight: 25 (conditional)</div>
+        </td>
+        <td class="number-col"><span class="chip chip-critical"><span class="shape-square"></span>2</span></td>
+        <td class="number-col"><span class="chip chip-high"><span class="shape-triangle"></span>4</span></td>
+        <td class="number-col"><span class="chip chip-medium"><span class="shape-circle"></span>6</span></td>
+        <td class="number-col"><span class="chip chip-pass"><span class="shape-check">&#10003;</span>3</span></td>
+        <td class="number-col"><span class="sub-score sub-score-critical">72</span></td>
+        <td class="number-col" style="font-size:11px;color:#666;">25 / 100</td>
+      </tr>
+
+      <!-- DRILL-DOWN PANEL (inline, Identity Intelligence Critical row selected) -->
+      <tr class="drill-down-row">
+        <td colspan="7">
+          <div class="drill-down-panel">
+            <div class="drill-down-header">
+              <div class="drill-down-title">Identity Intelligence &mdash; Critical Findings (5)</div>
+              <button style="background:none;border:none;color:#666;cursor:pointer;font-size:12px;">&times; Close</button>
+            </div>
+            <div class="finding-list">
+              <div class="finding-item">
+                <div class="finding-name">Leaked admin credential on dark web</div>
+                <div class="finding-desc">admin@contoso.com credentials found in breach dataset posted 14 days ago. Account has path to Global Admin.</div>
+                <div class="finding-meta">
+                  <span class="mitre-tag">T1589.001</span>
+                  <span class="chip chip-critical" style="font-size:9px;padding:1px 6px;"><span class="shape-square"></span>Critical</span>
+                  <span class="delta-tag">-15 pts</span>
+                </div>
+              </div>
+              <div class="finding-item">
+                <div class="finding-name">Compromised account in active session</div>
+                <div class="finding-desc">service-acct@contoso.com shows anomalous signin pattern indicative of credential stuffing.</div>
+                <div class="finding-meta">
+                  <span class="mitre-tag">T1078.004</span>
+                  <span class="chip chip-critical" style="font-size:9px;padding:1px 6px;"><span class="shape-square"></span>Critical</span>
+                  <span class="delta-tag">-11 pts</span>
+                </div>
+              </div>
+              <div style="font-size:10px;color:#555;padding-top:4px;">3 more findings not shown. See Appendix A in the PDF report.</div>
+            </div>
+          </div>
+        </td>
+      </tr>
+
+    </tbody>
+  </table>
+  <div class="matrix-note">Score computed using noisy-OR formula v2. Threat Detection excluded. Finding count capped at 50 per severity band for score contribution.</div>
+</div>
+<p class="annotation">Severity count chips are clickable. Clicking a cell opens DrillDownPanel inline below that row (antd Collapse, or simple expand/collapse). Only one drill-down open at a time.</p>
+
+<!-- STATE 2: AD NOT INTEGRATED (upsell banner) -->
+<div class="spacer"></div>
+<div class="state-title">State 2: Engine Matrix -- AD Not Integrated (upsell banner replaces AD row)</div>
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div style="font-size:13px;font-weight:600;color:#bbb;">Assessment Engine Summary</div>
+  </div>
+
+  <table class="matrix-table">
+    <thead>
+      <tr>
+        <th style="width:30%;">Engine</th>
+        <th class="number-col" style="width:10%;">Critical</th>
+        <th class="number-col" style="width:10%;">High</th>
+        <th class="number-col" style="width:10%;">Medium</th>
+        <th class="number-col" style="width:10%;">Pass</th>
+        <th class="number-col" style="width:15%;">Sub-Score</th>
+        <th class="number-col" style="width:15%;">Weight</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><div class="engine-name">Identity Hygiene</div><div class="engine-weight">Weight: 25</div></td>
+        <td class="number-col"><span class="chip chip-critical"><span class="shape-square"></span>3</span></td>
+        <td class="number-col"><span class="chip chip-high"><span class="shape-triangle"></span>12</span></td>
+        <td class="number-col"><span class="chip chip-medium"><span class="shape-circle"></span>8</span></td>
+        <td class="number-col"><span class="chip chip-pass"><span class="shape-check">&#10003;</span>5</span></td>
+        <td class="number-col"><span class="sub-score sub-score-critical">78</span></td>
+        <td class="number-col" style="font-size:11px;color:#666;">25 / 100</td>
+      </tr>
+      <tr>
+        <td><div class="engine-name">Platform Hygiene</div><div class="engine-weight">Weight: 20</div></td>
+        <td class="number-col"><span class="chip chip-critical"><span class="shape-square"></span>1</span></td>
+        <td class="number-col"><span class="chip chip-high"><span class="shape-triangle"></span>7</span></td>
+        <td class="number-col"><span class="chip chip-medium"><span class="shape-circle"></span>15</span></td>
+        <td class="number-col"><span class="chip chip-pass"><span class="shape-check">&#10003;</span>10</span></td>
+        <td class="number-col"><span class="sub-score sub-score-high">65</span></td>
+        <td class="number-col" style="font-size:11px;color:#666;">20 / 100</td>
+      </tr>
+      <tr>
+        <td><div class="engine-name">Identity Intelligence</div><div class="engine-weight">Weight: 20</div></td>
+        <td class="number-col"><span class="chip chip-critical"><span class="shape-square"></span>5</span></td>
+        <td class="number-col"><span class="chip chip-high"><span class="shape-triangle"></span>20</span></td>
+        <td class="number-col"><span class="chip chip-medium"><span class="shape-circle"></span>3</span></td>
+        <td class="number-col"><span class="chip chip-pass"><span class="shape-check">&#10003;</span>2</span></td>
+        <td class="number-col"><span class="sub-score sub-score-critical">90</span></td>
+        <td class="number-col" style="font-size:11px;color:#666;">20 / 100</td>
+      </tr>
+      <tr>
+        <td><div class="engine-name">Microsoft 365</div><div class="engine-weight">Weight: 15</div></td>
+        <td class="number-col"><span class="empty-cell">&mdash;</span></td>
+        <td class="number-col"><span class="chip chip-high"><span class="shape-triangle"></span>5</span></td>
+        <td class="number-col"><span class="chip chip-medium"><span class="shape-circle"></span>12</span></td>
+        <td class="number-col"><span class="chip chip-pass"><span class="shape-check">&#10003;</span>20</span></td>
+        <td class="number-col"><span class="sub-score sub-score-medium">45</span></td>
+        <td class="number-col" style="font-size:11px;color:#666;">15 / 100</td>
+      </tr>
+
+      <!-- AD UPSELL BANNER ROW -->
+      <tr class="ad-upsell-row">
+        <td colspan="7">
+          <div class="ad-upsell-banner">
+            <div class="ad-upsell-left">
+              <div>
+                <div class="ad-upsell-name">Active Directory</div>
+                <div class="not-assessed-badge">Not assessed</div>
+              </div>
+            </div>
+            <div class="ad-upsell-right">
+              <div class="ad-upsell-text">Extend visibility to on-premises Active Directory &mdash; discover hybrid attack paths invisible to cloud-only tools.</div>
+              <button class="learn-more-btn">Learn more</button>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="matrix-note">AD engine excluded from headline score. Headline computed over 4 connected engines only (IH + PH + II + M365).</div>
+</div>
+<p class="annotation">
+  ADUpsellBanner must be full-weight (same min-height as a normal row, same visual prominence). NEVER show "0" sub-score for AD.
+  NEVER grey out or shrink this banner. Per UW doc, AD not contributing to score when not integrated is explicit and expected -- do not show a zero.
+</p>
+
+<!-- STATE 3: HYBRID SIGNALS DETECTED (teaser) -->
+<div class="spacer"></div>
+<div class="state-title">State 3: Engine Matrix -- Hybrid Signals Detected (teaser, not upsell)</div>
+<div class="card">
+  <!-- Teaser banner above table -->
+  <div class="ad-teaser">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    Signals of on-premises AD detected via Entra Connect &mdash; not assessed. Contact Dela to extend your assessment.
+  </div>
+  <table class="matrix-table">
+    <thead>
+      <tr>
+        <th>Engine</th><th class="number-col">Critical</th><th class="number-col">High</th><th class="number-col">Medium</th><th class="number-col">Pass</th><th class="number-col">Sub-Score</th><th class="number-col">Weight</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><div class="engine-name">Identity Hygiene</div><div class="engine-weight">Weight: 25</div></td>
+        <td class="number-col"><span class="chip chip-critical"><span class="shape-square"></span>3</span></td>
+        <td class="number-col"><span class="chip chip-high"><span class="shape-triangle"></span>12</span></td>
+        <td class="number-col"><span class="chip chip-medium"><span class="shape-circle"></span>8</span></td>
+        <td class="number-col"><span class="chip chip-pass"><span class="shape-check">&#10003;</span>5</span></td>
+        <td class="number-col"><span class="sub-score sub-score-critical">78</span></td>
+        <td class="number-col" style="font-size:11px;color:#666;">25 / 100</td>
+      </tr>
+      <!-- remaining engine rows... -->
+      <tr>
+        <td><div class="engine-name">Microsoft 365</div><div class="engine-weight">Weight: 15</div></td>
+        <td class="number-col"><span class="empty-cell">&mdash;</span></td>
+        <td class="number-col"><span class="chip chip-high"><span class="shape-triangle"></span>5</span></td>
+        <td class="number-col"><span class="chip chip-medium"><span class="shape-circle"></span>12</span></td>
+        <td class="number-col"><span class="chip chip-pass"><span class="shape-check">&#10003;</span>20</span></td>
+        <td class="number-col"><span class="sub-score sub-score-medium">45</span></td>
+        <td class="number-col" style="font-size:11px;color:#666;">15 / 100</td>
+      </tr>
+      <!-- No AD row at all when hybrid_signals_detected -->
+    </tbody>
+  </table>
+  <div class="matrix-note">AD not formally integrated. Teaser shown, no AD row, no AD upsell card in this state.</div>
+</div>
+<p class="annotation">
+  "hybrid_signals_detected": show ADTeaserBanner above the table (not as a row). Do NOT show ADUpsellBanner. No AD row in the matrix.
+  Per UW Story 3 acceptance: "a teaser is shown, not upsell and not a 0 AD score."
+</p>
+
+<!-- STATE 4: DRILL-DOWN EMPTY STATE -->
+<div class="spacer"></div>
+<div class="state-title">State 4: DrillDown open -- Empty state ("No findings in this category")</div>
+<div class="card">
+  <table class="matrix-table">
+    <thead><tr><th>Engine</th><th class="number-col">Critical</th><th class="number-col">High</th><th class="number-col">Medium</th><th class="number-col">Pass</th><th class="number-col">Sub-Score</th><th class="number-col">Weight</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><div class="engine-name">Microsoft 365</div><div class="engine-weight">Weight: 15</div></td>
+        <td class="number-col cell-selected"><span class="chip chip-critical" style="outline:2px solid #1890ff;"><span class="shape-square"></span>0</span></td>
+        <td class="number-col"><span class="chip chip-high"><span class="shape-triangle"></span>5</span></td>
+        <td class="number-col"><span class="chip chip-medium"><span class="shape-circle"></span>12</span></td>
+        <td class="number-col"><span class="chip chip-pass"><span class="shape-check">&#10003;</span>20</span></td>
+        <td class="number-col"><span class="sub-score sub-score-medium">45</span></td>
+        <td class="number-col" style="font-size:11px;color:#666;">15 / 100</td>
+      </tr>
+      <tr class="drill-down-row">
+        <td colspan="7">
+          <div class="drill-down-panel">
+            <div class="drill-down-header">
+              <div class="drill-down-title">Microsoft 365 &mdash; Critical Findings</div>
+              <button style="background:none;border:none;color:#666;cursor:pointer;font-size:12px;">&times; Close</button>
+            </div>
+            <div style="font-size:12px;color:#555;font-style:italic;">No findings in this category.</div>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<p class="annotation">Per UW error state table: "Engine matrix cell drill-down shows zero findings -- Drill-down panel shows 'No findings in this category.'"</p>
+
+<!-- IMPLEMENTATION NOTES -->
+<div class="spacer"></div>
+<div style="border:1px solid #2a2a2a;border-radius:8px;padding:16px;font-size:11px;color:#666;line-height:1.8;">
+  <strong style="color:#888;display:block;margin-bottom:8px;">Implementation Notes</strong>
+  <ul style="list-style:disc;padding-left:16px;">
+    <li>EngineMatrix renders a plain HTML &lt;table&gt; with proper &lt;thead&gt; and scope="col" on th elements -- not antd Table. This gives precise control over severity chip cell layout.</li>
+    <li>Severity count cells that are 0 show a dash (—) not a "0" chip. Non-zero counts show a clickable chip with color + shape + count.</li>
+    <li>DrillDownPanel: antd Collapse rendered as an inline &lt;tr&gt; below the selected row. One panel open at a time -- clicking a new cell collapses the previous one.</li>
+    <li>Sub-score color thresholds: 75-100 = sub-score-critical (#DC2626), 50-74 = sub-score-high (#E17036), 25-49 = sub-score-medium (#FFDC00), 0-24 = sub-score-low (#52C41A).</li>
+    <li>ADUpsellBanner: spans all 7 columns (colspan=7). Background gradient matches existing BreachLikelihood card gradient. "Learn more" button links to the Dela upsell URL. Must NEVER show a numeric sub-score for AD when not integrated.</li>
+    <li>ADTeaserBanner: rendered as a div above the table, not as a table row. Uses yellow (#FFDC00) color to signal informational (not danger, not upsell).</li>
+    <li>Engine order (no Threat Detection): IH, PH, II, M365, AD (conditional). Remove "Threat Detection" from EngineOrderMapping in constants.ts and from ENGINE_ORDER in MSSP ReportsPage.tsx.</li>
+  </ul>
+</div>
+
+</body>
+</html>

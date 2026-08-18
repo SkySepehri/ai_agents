@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DESIGN-001 Wireframe: PDF Pages</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Georgia, "Times New Roman", serif; background: #888; padding: 32px 24px; }
+  .annotation { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 10px; color: #bbb; font-style: italic; margin: 8px 0 24px 0; background: #2a2a2a; padding: 6px 10px; border-radius: 4px; }
+  h1 { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 13px; color: #e5e5e5; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; background: #1a1a1a; padding: 8px 12px; border-radius: 4px; }
+  .page-label { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 11px; color: #888; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  .spacer { height: 32px; }
+
+  /* A4 page simulation */
+  .page {
+    background: #ffffff;
+    width: 595px;
+    min-height: 842px;
+    margin: 0 auto 32px auto;
+    padding: 48px 48px 40px 48px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    position: relative;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #1a1a1a;
+    font-size: 10px;
+    line-height: 1.5;
+  }
+
+  /* PDF Header / Footer */
+  .pdf-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid #e0e0e0; }
+  .pdf-header-logo { font-size: 14px; font-weight: 700; color: #0050b3; letter-spacing: 0.1em; }
+  .pdf-header-title { font-size: 10px; color: #888; }
+  .pdf-footer { position: absolute; bottom: 20px; left: 48px; right: 48px; display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid #eee; font-size: 8px; color: #aaa; }
+
+  /* Cover page elements */
+  .cover-score-ring { width: 120px; height: 120px; margin: 0 auto 16px auto; position: relative; }
+  .cover-score-ring svg { width: 100%; height: 100%; }
+  .cover-score-inner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+  .cover-score-number { font-size: 28px; font-weight: 700; color: #c41d1d; line-height: 1; }
+  .cover-score-label { font-size: 10px; font-weight: 600; color: #c41d1d; }
+  .cover-org-name { font-size: 18px; font-weight: 700; color: #1a1a1a; text-align: center; margin-bottom: 6px; }
+  .cover-report-title { font-size: 13px; color: #555; text-align: center; margin-bottom: 24px; }
+  .cover-ttga-hero { text-align: center; margin: 20px 0; padding: 16px; background: #fff0f0; border: 1px solid #ffa5a5; border-radius: 8px; }
+  .cover-ttga-number { font-size: 40px; font-weight: 700; color: #c41d1d; line-height: 1; }
+  .cover-ttga-label { font-size: 11px; color: #888; margin-top: 4px; }
+  .cover-verdict { font-size: 12px; color: #444; font-style: italic; text-align: center; line-height: 1.7; margin: 16px 0; padding: 12px 16px; border-left: 3px solid #c41d1d; background: #fafafa; }
+  .cover-meta-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 8px; border-top: 1px solid #eee; padding-top: 12px; margin-top: 12px; }
+  .cover-meta-label { color: #aaa; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+  .cover-meta-value { color: #333; font-weight: 600; }
+
+  /* Severity chips in PDF */
+  .pdf-chip { display: inline-flex; align-items: center; gap: 3px; padding: 1px 6px; border-radius: 3px; font-size: 8px; font-weight: 700; border: 1px solid; }
+  .pdf-chip-critical { background: repeating-linear-gradient(45deg, rgba(220,38,38,0.15) 0px, rgba(220,38,38,0.15) 2px, rgba(220,38,38,0.05) 2px, rgba(220,38,38,0.05) 5px); color: #c41d1d; border-color: rgba(220,38,38,0.5); }
+  .pdf-chip-high { background: repeating-linear-gradient(45deg, rgba(225,112,54,0.15) 0px, rgba(225,112,54,0.15) 2px, rgba(225,112,54,0.05) 2px, rgba(225,112,54,0.05) 8px); color: #d4571b; border-color: rgba(225,112,54,0.5); }
+  .pdf-chip-medium { background: radial-gradient(circle, rgba(255,220,0,0.25) 1px, transparent 1px) 0 0 / 6px 6px; color: #a87a00; border-color: rgba(255,220,0,0.5); }
+  .pdf-chip-low { background: #f6fff0; color: #389e0d; border-color: rgba(82,196,26,0.4); }
+  .pdf-shape-square { width: 6px; height: 6px; background: currentColor; display: inline-block; flex-shrink: 0; }
+  .pdf-shape-triangle { width: 0; height: 0; border-left: 3px solid transparent; border-right: 3px solid transparent; border-bottom: 6px solid currentColor; display: inline-block; flex-shrink: 0; }
+  .pdf-shape-circle { width: 6px; height: 6px; border-radius: 50%; background: currentColor; display: inline-block; flex-shrink: 0; }
+  .pdf-shape-circle-outline { width: 6px; height: 6px; border-radius: 50%; border: 1.5px solid currentColor; background: transparent; display: inline-block; flex-shrink: 0; }
+
+  /* MITRE tag in PDF */
+  .pdf-mitre { font-size: 7px; background: #e8f0fe; color: #0050b3; border: 1px solid #b3c8f0; border-radius: 2px; padding: 0px 4px; }
+
+  /* Section title style */
+  .section-title { font-size: 14px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; }
+  .section-subtitle { font-size: 9px; color: #888; margin-bottom: 14px; }
+  hr { border: none; border-top: 1px solid #e0e0e0; margin: 12px 0; }
+
+  /* Engine matrix in PDF */
+  .pdf-table { width: 100%; border-collapse: collapse; font-size: 8px; }
+  .pdf-table th { background: #f0f0f0; font-weight: 600; text-align: left; padding: 5px 6px; border: 1px solid #ddd; font-size: 7px; text-transform: uppercase; color: #666; letter-spacing: 0.04em; }
+  .pdf-table th.center { text-align: center; }
+  .pdf-table td { padding: 5px 6px; border: 1px solid #eee; vertical-align: middle; }
+  .pdf-table td.center { text-align: center; }
+  .pdf-engine-name { font-weight: 600; color: #222; font-size: 8px; }
+  .pdf-sub-score-critical { color: #c41d1d; font-weight: 700; font-size: 10px; }
+  .pdf-sub-score-high { color: #d4571b; font-weight: 700; font-size: 10px; }
+
+  /* Attack path story */
+  .attack-path-image-placeholder { background: #f5f5f5; border: 2px dashed #ccc; border-radius: 6px; height: 240px; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 10px; margin: 12px 0; text-align: center; }
+  .story-caption { display: flex; gap: 10px; margin-bottom: 10px; }
+  .caption-number { width: 18px; height: 18px; border-radius: 50%; background: #c41d1d; color: white; font-size: 8px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .caption-text { font-size: 9px; color: #333; line-height: 1.6; }
+
+  /* Remediation table in PDF */
+  .remediation-row { display: flex; gap: 8px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+  .remediation-rank-circle { width: 18px; height: 18px; border-radius: 50%; background: #0050b3; color: white; font-size: 8px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .remediation-row-title { font-size: 9px; font-weight: 600; color: #222; flex: 1; }
+  .remediation-row-delta { font-size: 10px; font-weight: 700; color: #c41d1d; white-space: nowrap; }
+
+  /* Progress bars in PDF (Posture) */
+  .pdf-progress-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .pdf-progress-label { font-size: 8px; color: #555; width: 80px; flex-shrink: 0; }
+  .pdf-progress-track { flex: 1; height: 5px; background: #eee; border-radius: 2px; overflow: hidden; }
+  .pdf-progress-fill { height: 100%; border-radius: 2px; }
+  .pdf-progress-count { font-size: 7px; color: #aaa; width: 40px; text-align: right; flex-shrink: 0; }
+
+  /* E8 dots in PDF */
+  .pdf-e8-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+  .pdf-e8-label { font-size: 8px; color: #444; flex: 1; }
+  .pdf-e8-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .pdf-e8-filled { background: #0050b3; }
+  .pdf-e8-target { background: transparent; border: 1.5px solid #0050b3; }
+  .pdf-e8-empty { background: #e0e0e0; }
+</style>
+</head>
+<body>
+
+<h1>DESIGN-001 Wireframe: PDF Pages (All 10 Pages + Appendices)</h1>
+<div class="annotation">Static A4 mockups (595px width). Implementation uses @react-pdf/renderer. Inter font registered same as existing MainContentV2.tsx. Severity chips include color + shape + text + pattern fill for B&W printing.</div>
+
+<!-- PAGE 1: COVER -->
+<div class="page-label">Page 1: Cover</div>
+<div class="page">
+  <!-- Header -->
+  <div class="pdf-header">
+    <div class="pdf-header-logo">DELA</div>
+    <div class="pdf-header-title">Entra ID Breach Likelihood Assessment</div>
+  </div>
+
+  <!-- Score ring (static in PDF) -->
+  <div class="cover-score-ring">
+    <svg viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="48" fill="none" stroke="#f0f0f0" stroke-width="12"/>
+      <circle cx="60" cy="60" r="48" fill="none" stroke="#c41d1d" stroke-width="12"
+        stroke-dasharray="246 302" stroke-dashoffset="0"
+        stroke-linecap="round" transform="rotate(-90 60 60)"/>
+    </svg>
+    <div class="cover-score-inner">
+      <div class="cover-score-number">82</div>
+      <div class="cover-score-label">Critical</div>
+    </div>
+  </div>
+
+  <div class="cover-org-name">Contoso Ltd</div>
+  <div class="cover-report-title">Breach Likelihood Assessment &mdash; 18 August 2026</div>
+
+  <!-- TTGA Hero stat -->
+  <div class="cover-ttga-hero">
+    <div class="cover-ttga-number">3</div>
+    <div class="cover-ttga-label">hops to Global Administrator</div>
+  </div>
+
+  <!-- Verdict text -->
+  <div class="cover-verdict">
+    "Your tenant is 3 hops from full takeover. 2 admin passwords are already circulating on criminal marketplaces. 4 standing Global Admins are reachable without MFA bypass."
+  </div>
+
+  <!-- Tenant metadata -->
+  <div class="cover-meta-grid">
+    <div>
+      <div class="cover-meta-label">Tenant</div>
+      <div class="cover-meta-value">contoso.onmicrosoft.com</div>
+    </div>
+    <div>
+      <div class="cover-meta-label">License</div>
+      <div class="cover-meta-value">Microsoft Entra P2</div>
+    </div>
+    <div>
+      <div class="cover-meta-label">Accounts</div>
+      <div class="cover-meta-value">1,247 users</div>
+    </div>
+    <div>
+      <div class="cover-meta-label">Organization</div>
+      <div class="cover-meta-value">Contoso Ltd</div>
+    </div>
+    <div>
+      <div class="cover-meta-label">Assessment Date</div>
+      <div class="cover-meta-value">18 Aug 2026</div>
+    </div>
+    <div>
+      <div class="cover-meta-label">Model Version</div>
+      <div class="cover-meta-value">v2 (noisy-OR)</div>
+    </div>
+  </div>
+
+  <div class="pdf-footer">
+    <div>Powered by Dela Security</div>
+    <div>1 / 10+</div>
+    <div>&copy; 2026 Dela &mdash; All rights reserved</div>
+  </div>
+</div>
+
+<!-- PAGE 2: ATTACK-PATH STORY -->
+<div class="page-label">Page 2: Executive Attack-Path Story</div>
+<div class="page">
+  <div class="pdf-header">
+    <div class="pdf-header-logo">DELA</div>
+    <div class="pdf-header-title">Entra ID Breach Likelihood Assessment</div>
+  </div>
+
+  <div class="section-title">How admin@contoso.com Becomes Your Global Administrator &mdash; In 3 Steps</div>
+  <div class="section-subtitle">Primary attack path &bull; 3 hops &bull; Cumulative risk reduction: 28.5 pts</div>
+
+  <!-- Graph image placeholder -->
+  <div class="attack-path-image-placeholder">
+    [Static SVG-to-PNG render of primary attack path graph]<br>
+    admin@contoso.com &rarr; IT-Admins &rarr; Global Administrator<br><br>
+    Fallback if image fails: text-based step list shown below
+  </div>
+
+  <!-- 3 captions -->
+  <div class="story-caption">
+    <div class="caption-number">1</div>
+    <div class="caption-text">
+      <strong>Initial Access:</strong> admin@contoso.com &mdash; a Cloud Application Administrator &mdash; has their credentials exposed in a dark web breach dataset posted 14 days ago.
+      An attacker purchases these credentials for under $50.
+      <div style="margin-top:3px;"><span class="pdf-mitre">TA0001 Initial Access</span> <span class="pdf-mitre">T1589.001 Credentials</span></div>
+    </div>
+  </div>
+
+  <div class="story-caption">
+    <div class="caption-number">2</div>
+    <div class="caption-text">
+      <strong>Privilege Escalation:</strong> Using the stolen credential, the attacker authenticates as admin@contoso.com and discovers membership in the IT-Admins security group.
+      That group holds an active (not PIM-eligible) Global Administrator role assignment &mdash; granting immediate Tier-0 access.
+      <div style="margin-top:3px;"><span class="pdf-mitre">TA0004 Privilege Escalation</span> <span class="pdf-mitre">T1078.004 Valid Accounts</span></div>
+    </div>
+  </div>
+
+  <div class="story-caption">
+    <div class="caption-number" style="background:#990000;">3</div>
+    <div class="caption-text" style="color:#c41d1d;">
+      <strong>Takeover:</strong> The attacker now controls the Global Administrator role &mdash; the highest privilege in your Entra ID tenant.
+      All 1,247 mailboxes, 89 SharePoint sites, 12 connected applications, and all Conditional Access policies are immediately compromised.
+      No further escalation is required.
+      <div style="margin-top:3px;"><span class="pdf-mitre">TA0004 Privilege Escalation</span></div>
+    </div>
+  </div>
+
+  <div class="pdf-footer">
+    <div>Powered by Dela Security</div>
+    <div>2 / 10+</div>
+    <div>&copy; 2026 Dela &mdash; All rights reserved</div>
+  </div>
+</div>
+
+<!-- PAGE 3: ENGINE SUMMARY MATRIX -->
+<div class="page-label">Page 3: Engine Summary Matrix</div>
+<div class="page">
+  <div class="pdf-header">
+    <div class="pdf-header-logo">DELA</div>
+    <div class="pdf-header-title">Entra ID Breach Likelihood Assessment</div>
+  </div>
+
+  <div class="section-title">Assessment Engine Summary</div>
+  <div class="section-subtitle">v2 noisy-OR formula &bull; Threat Detection excluded &bull; Finding count capped at 50 per severity band</div>
+  <hr>
+
+  <table class="pdf-table">
+    <thead>
+      <tr>
+        <th style="width:30%;">Engine</th>
+        <th class="center">Critical</th>
+        <th class="center">High</th>
+        <th class="center">Medium</th>
+        <th class="center">Pass</th>
+        <th class="center">Sub-Score</th>
+        <th class="center">Weight</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <div class="pdf-engine-name">Identity Hygiene</div>
+          <div style="font-size:7px;color:#aaa;">IH &bull; TA0004 TA0006</div>
+        </td>
+        <td class="center"><span class="pdf-chip pdf-chip-critical"><span class="pdf-shape-square"></span>3</span></td>
+        <td class="center"><span class="pdf-chip pdf-chip-high"><span class="pdf-shape-triangle"></span>12</span></td>
+        <td class="center"><span class="pdf-chip pdf-chip-medium"><span class="pdf-shape-circle"></span>8</span></td>
+        <td class="center" style="color:#389e0d;font-weight:600;">5</td>
+        <td class="center"><span class="pdf-sub-score-critical">78</span></td>
+        <td class="center" style="color:#aaa;">25</td>
+      </tr>
+      <tr>
+        <td>
+          <div class="pdf-engine-name">Platform Hygiene</div>
+          <div style="font-size:7px;color:#aaa;">PH &bull; TA0001 TA0003</div>
+        </td>
+        <td class="center"><span class="pdf-chip pdf-chip-critical"><span class="pdf-shape-square"></span>1</span></td>
+        <td class="center"><span class="pdf-chip pdf-chip-high"><span class="pdf-shape-triangle"></span>7</span></td>
+        <td class="center"><span class="pdf-chip pdf-chip-medium"><span class="pdf-shape-circle"></span>15</span></td>
+        <td class="center" style="color:#389e0d;font-weight:600;">10</td>
+        <td class="center"><span class="pdf-sub-score-high">65</span></td>
+        <td class="center" style="color:#aaa;">20</td>
+      </tr>
+      <tr>
+        <td>
+          <div class="pdf-engine-name">Identity Intelligence</div>
+          <div style="font-size:7px;color:#aaa;">II &bull; TA0001 TA0006</div>
+        </td>
+        <td class="center"><span class="pdf-chip pdf-chip-critical"><span class="pdf-shape-square"></span>5</span></td>
+        <td class="center"><span class="pdf-chip pdf-chip-high"><span class="pdf-shape-triangle"></span>20</span></td>
+        <td class="center"><span class="pdf-chip pdf-chip-medium"><span class="pdf-shape-circle"></span>3</span></td>
+        <td class="center" style="color:#389e0d;font-weight:600;">2</td>
+        <td class="center"><span class="pdf-sub-score-critical">90</span></td>
+        <td class="center" style="color:#aaa;">20</td>
+      </tr>
+      <tr>
+        <td>
+          <div class="pdf-engine-name">Microsoft 365</div>
+          <div style="font-size:7px;color:#aaa;">M365 &bull; TA0003 TA0005</div>
+        </td>
+        <td class="center" style="color:#ccc;">—</td>
+        <td class="center"><span class="pdf-chip pdf-chip-high"><span class="pdf-shape-triangle"></span>5</span></td>
+        <td class="center"><span class="pdf-chip pdf-chip-medium"><span class="pdf-shape-circle"></span>12</span></td>
+        <td class="center" style="color:#389e0d;font-weight:600;">20</td>
+        <td class="center" style="color:#a87a00;font-weight:700;font-size:10px;">45</td>
+        <td class="center" style="color:#aaa;">15</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="font-size:7px;color:#aaa;margin-top:8px;font-style:italic;">
+    Headline score: Sum(W_e &times; EngineScore_e) / Sum(W_e) = 82. Active Directory not assessed (not integrated).
+    Severity chips show: color + shape + text + pattern fill for black-and-white printing compatibility.
+  </div>
+
+  <div class="pdf-footer">
+    <div>Powered by Dela Security</div>
+    <div>3 / 10+</div>
+    <div>&copy; 2026 Dela &mdash; All rights reserved</div>
+  </div>
+</div>
+
+<!-- PAGE 6: REMEDIATION ROADMAP -->
+<div class="page-label">Page 6: Prioritized Remediation Roadmap</div>
+<div class="page">
+  <div class="pdf-header">
+    <div class="pdf-header-logo">DELA</div>
+    <div class="pdf-header-title">Entra ID Breach Likelihood Assessment</div>
+  </div>
+
+  <div class="section-title">Prioritized Remediation Roadmap</div>
+  <div class="section-subtitle">Current score: 82 (Critical) &bull; Implementing all items reduces score by 38 points to 44 (Medium)</div>
+  <hr>
+
+  <div class="remediation-row">
+    <div class="remediation-rank-circle">1</div>
+    <div style="flex:1;">
+      <div class="remediation-row-title">Reset leaked admin credential and enforce phishing-resistant MFA</div>
+      <div style="font-size:8px;color:#888;margin-top:2px;">admin@contoso.com &bull; Identity Intelligence &bull; <span class="pdf-mitre">T1589.001</span> &bull; Severs: path-001, path-003</div>
+      <div style="font-size:8px;color:#555;margin-top:2px;">Score after fix: <strong>67</strong> (High)</div>
+    </div>
+    <div class="remediation-row-delta">-15 pts</div>
+  </div>
+  <div class="remediation-row">
+    <div class="remediation-rank-circle">2</div>
+    <div style="flex:1;">
+      <div class="remediation-row-title">Remove nested admin group membership for IT-Admins</div>
+      <div style="font-size:8px;color:#888;margin-top:2px;">IT-Admins group (42 members) &bull; Identity Hygiene &bull; <span class="pdf-mitre">T1078.004</span> &bull; Severs: path-001</div>
+      <div style="font-size:8px;color:#555;margin-top:2px;">Score after fix: <strong>74</strong> (High)</div>
+    </div>
+    <div class="remediation-row-delta">-8 pts</div>
+  </div>
+  <div class="remediation-row">
+    <div class="remediation-rank-circle">3</div>
+    <div style="flex:1;">
+      <div class="remediation-row-title">Convert 4 standing Global Admin assignments to PIM-eligible</div>
+      <div style="font-size:8px;color:#888;margin-top:2px;">4 users &bull; Identity Hygiene &bull; <span class="pdf-mitre">T1078.004</span> &bull; Severs: path-002, path-004</div>
+      <div style="font-size:8px;color:#555;margin-top:2px;">Score after fix: <strong>75</strong> (High)</div>
+    </div>
+    <div class="remediation-row-delta">-7 pts</div>
+  </div>
+  <div class="remediation-row">
+    <div class="remediation-rank-circle">4</div>
+    <div style="flex:1;">
+      <div class="remediation-row-title">Restrict Application.ReadWrite.All to scoped API permissions</div>
+      <div style="font-size:8px;color:#888;margin-top:2px;">3 app registrations &bull; Platform Hygiene &bull; <span class="pdf-mitre">T1098.001</span></div>
+      <div style="font-size:8px;color:#555;margin-top:2px;">Score after fix: <strong>77</strong> (Critical)</div>
+    </div>
+    <div class="remediation-row-delta">-5 pts</div>
+  </div>
+  <div class="remediation-row">
+    <div class="remediation-rank-circle">5</div>
+    <div style="flex:1;">
+      <div class="remediation-row-title">Enable Conditional Access policy for all admin accounts</div>
+      <div style="font-size:8px;color:#888;margin-top:2px;">Platform Hygiene &bull; No MITRE tag (unmapped)</div>
+      <div style="font-size:8px;color:#555;margin-top:2px;">Score after fix: <strong>79</strong> (Critical)</div>
+    </div>
+    <div class="remediation-row-delta" style="color:#d4571b;">-3 pts</div>
+  </div>
+
+  <div style="font-size:7px;color:#aaa;margin-top:12px;font-style:italic;">
+    Risk delta values computed at scan time using v2 noisy-OR formula. Deltas are independent (not cumulative with each other).
+    "Score after fix" shows the headline score if only that single item is remediated.
+  </div>
+
+  <div class="pdf-footer">
+    <div>Powered by Dela Security</div>
+    <div>6 / 10+</div>
+    <div>&copy; 2026 Dela &mdash; All rights reserved</div>
+  </div>
+</div>
+
+<!-- PAGE 10: APPENDIX B (FRAMEWORK ALIGNMENT) -->
+<div class="page-label">Page 10: Appendix B -- Framework Alignment</div>
+<div class="page">
+  <div class="pdf-header">
+    <div class="pdf-header-logo">DELA</div>
+    <div class="pdf-header-title">Entra ID Breach Likelihood Assessment</div>
+  </div>
+
+  <div class="section-title">Appendix B: Compliance Framework Alignment</div>
+  <div class="section-subtitle">Coverage derived from tagged BLA findings. Controls not covered by BLA noted as "Not assessed."</div>
+  <hr>
+
+  <!-- NIST CSF -->
+  <div style="font-size:10px;font-weight:600;color:#222;margin-bottom:8px;">NIST Cybersecurity Framework 2.0</div>
+  <div class="pdf-progress-row">
+    <div class="pdf-progress-label">Govern</div>
+    <div class="pdf-progress-track"><div class="pdf-progress-fill" style="width:67%;background:#a87a00;"></div></div>
+    <div class="pdf-progress-count">4/6 (67%)</div>
+  </div>
+  <div class="pdf-progress-row">
+    <div class="pdf-progress-label">Identify</div>
+    <div class="pdf-progress-track"><div class="pdf-progress-fill" style="width:67%;background:#a87a00;"></div></div>
+    <div class="pdf-progress-count">8/12 (67%)</div>
+  </div>
+  <div class="pdf-progress-row">
+    <div class="pdf-progress-label">Protect</div>
+    <div class="pdf-progress-track"><div class="pdf-progress-fill" style="width:67%;background:#a87a00;"></div></div>
+    <div class="pdf-progress-count">10/15 (67%)</div>
+  </div>
+  <div class="pdf-progress-row">
+    <div class="pdf-progress-label">Detect</div>
+    <div class="pdf-progress-track"><div class="pdf-progress-fill" style="width:38%;background:#c41d1d;"></div></div>
+    <div class="pdf-progress-count">3/8 (38%)</div>
+  </div>
+  <div class="pdf-progress-row">
+    <div class="pdf-progress-label">Respond</div>
+    <div class="pdf-progress-track"><div class="pdf-progress-fill" style="width:33%;background:#c41d1d;"></div></div>
+    <div class="pdf-progress-count">2/6 (33%)</div>
+  </div>
+
+  <hr>
+
+  <!-- ISO 27001 -->
+  <div style="font-size:10px;font-weight:600;color:#222;margin-bottom:8px;">ISO/IEC 27001:2022 Annex A</div>
+  <div class="pdf-progress-row">
+    <div class="pdf-progress-label">A.5 Organizational</div>
+    <div class="pdf-progress-track"><div class="pdf-progress-fill" style="width:70%;background:#389e0d;"></div></div>
+    <div class="pdf-progress-count">7/10 (70%)</div>
+  </div>
+  <div class="pdf-progress-row">
+    <div class="pdf-progress-label">A.6 People</div>
+    <div class="pdf-progress-track"><div class="pdf-progress-fill" style="width:60%;background:#a87a00;"></div></div>
+    <div class="pdf-progress-count">3/5 (60%)</div>
+  </div>
+  <div class="pdf-progress-row">
+    <div class="pdf-progress-label">A.7 Physical</div>
+    <div class="pdf-progress-track"><div class="pdf-progress-fill" style="width:0%;background:#ccc;"></div></div>
+    <div class="pdf-progress-count" style="font-style:italic;color:#bbb;">Not assessed</div>
+  </div>
+  <div class="pdf-progress-row">
+    <div class="pdf-progress-label">A.8 Technological</div>
+    <div class="pdf-progress-track"><div class="pdf-progress-fill" style="width:60%;background:#a87a00;"></div></div>
+    <div class="pdf-progress-count">9/15 (60%)</div>
+  </div>
+
+  <hr>
+
+  <!-- Essential Eight -->
+  <div style="font-size:10px;font-weight:600;color:#222;margin-bottom:8px;">Essential Eight (ASD)</div>
+  <div class="pdf-e8-row">
+    <div class="pdf-e8-label">Restrict administrative privileges</div>
+    <div class="pdf-e8-dot pdf-e8-filled"></div>
+    <div class="pdf-e8-dot pdf-e8-empty"></div>
+    <div class="pdf-e8-dot pdf-e8-target"></div>
+    <div style="font-size:7px;color:#888;margin-left:4px;">ML1/3</div>
+  </div>
+  <div class="pdf-e8-row">
+    <div class="pdf-e8-label">Multi-factor authentication</div>
+    <div class="pdf-e8-dot pdf-e8-filled"></div>
+    <div class="pdf-e8-dot pdf-e8-filled"></div>
+    <div class="pdf-e8-dot pdf-e8-target"></div>
+    <div style="font-size:7px;color:#888;margin-left:4px;">ML2/3</div>
+  </div>
+  <div class="pdf-e8-row">
+    <div class="pdf-e8-label">Patch applications</div>
+    <div class="pdf-e8-dot pdf-e8-filled"></div>
+    <div class="pdf-e8-dot pdf-e8-target"></div>
+    <div class="pdf-e8-dot pdf-e8-empty"></div>
+    <div style="font-size:7px;color:#888;margin-left:4px;">ML1/2</div>
+  </div>
+  <div class="pdf-e8-row">
+    <div class="pdf-e8-label">Application control</div>
+    <div style="font-size:8px;color:#aaa;font-style:italic;">Not assessed by BLA</div>
+  </div>
+  <div class="pdf-e8-row">
+    <div class="pdf-e8-label">Patch operating systems</div>
+    <div style="font-size:8px;color:#aaa;font-style:italic;">Not assessed by BLA</div>
+  </div>
+  <div class="pdf-e8-row">
+    <div class="pdf-e8-label">Regular backups</div>
+    <div style="font-size:8px;color:#aaa;font-style:italic;">Not assessed by BLA</div>
+  </div>
+
+  <div style="font-size:7px;color:#aaa;margin-top:10px;font-style:italic;">
+    Framework alignment is derived from tagged BLA findings. Controls not covered by BLA are noted as "Not assessed."
+    Dot key: filled circle = maturity level achieved; ring circle = target level; empty circle = gap.
+  </div>
+
+  <div class="pdf-footer">
+    <div>Powered by Dela Security</div>
+    <div>10 / 10+</div>
+    <div>&copy; 2026 Dela &mdash; All rights reserved</div>
+  </div>
+</div>
+
+<!-- APPENDIX C: AD UPSELL (adIntegrationState !== "integrated") -->
+<div class="page-label">Appendix C: Active Directory (adIntegrationState = "not_integrated")</div>
+<div class="page" style="min-height:400px;">
+  <div class="pdf-header">
+    <div class="pdf-header-logo">DELA</div>
+    <div class="pdf-header-title">Entra ID Breach Likelihood Assessment</div>
+  </div>
+
+  <div class="section-title">Appendix C: Active Directory Assessment</div>
+  <hr>
+
+  <!-- Full-weight upsell card -->
+  <div style="background:#f8f9ff;border:2px solid #b3c8f0;border-radius:8px;padding:24px;margin-top:8px;text-align:center;">
+    <div style="font-size:14px;font-weight:700;color:#0050b3;margin-bottom:8px;">Extend Your Assessment to On-Premises Active Directory</div>
+    <div style="font-size:10px;color:#555;line-height:1.7;max-width:420px;margin:0 auto 16px auto;">
+      Dela's Active Directory collector discovers hybrid attack paths that are invisible to cloud-only assessments.
+      On-premises Domain Admins can become Global Administrators via Entra Connect sync accounts &mdash;
+      a path not visible in this report.
+    </div>
+    <div style="font-size:10px;color:#0050b3;font-weight:600;">Contact your Dela representative to add on-premises AD visibility.</div>
+  </div>
+
+  <div style="font-size:8px;color:#aaa;margin-top:16px;font-style:italic;">
+    Active Directory was not assessed in this scan. No AD score is computed. This appendix shows an informational note only.
+    AD findings, paths, and sub-score are excluded from the headline score of 82.
+  </div>
+  <p style="font-size:8px;color:#c41d1d;margin-top:6px;font-style:italic;">NOTE: No "0" score is displayed for AD when not integrated. This card is always full-weight (never greyed out, never shrunk).</p>
+
+  <div class="pdf-footer">
+    <div>Powered by Dela Security</div>
+    <div>Appendix C</div>
+    <div>&copy; 2026 Dela &mdash; All rights reserved</div>
+  </div>
+</div>
+
+<div class="annotation">
+  Pages 4-5 (per-engine detail cards) and Pages 7-9 (Appendix A evidence) follow the same structural patterns shown above.
+  Each engine card on pages 4-5 shows: engine name + sub-score badge, summary paragraph, top 5 findings (name + severity chip + MITRE tag + description snippet), recommendation paragraph, framework tags (NIST CSF subcategory, ISO 27001, E8 mitigation) as small gray labels.
+  Appendix A (pages 7-9) uses a similar finding-list format with an "ON ATTACK PATH" red badge next to findings that appear in the primaryPath graph.
+  Severity chips in PDF always use: color + shape + text + pattern fill (crosshatch for Critical, diagonal lines for High, dots for Medium, empty for Low) per SC-011 and the B&W printing requirement.
+</div>
+
+</body>
+</html>

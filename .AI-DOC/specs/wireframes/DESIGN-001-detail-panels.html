@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DESIGN-001 Wireframe: Detail Panels + Blast Radius</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f0f0f; color: #e5e5e5; padding: 24px; }
+  .annotation { font-size: 10px; color: #555; font-style: italic; margin-top: 6px; }
+  .state-title { font-size: 12px; font-weight: 600; color: #888; margin-bottom: 12px; padding: 4px 10px; background: #1a1a1a; border-radius: 4px; display: inline-block; }
+  .spacer { height: 40px; }
+  h1 { font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+
+  /* Layout: graph + panel side-by-side to show the "no mask" drawer behavior */
+  .split-layout { display: grid; grid-template-columns: 1fr 380px; gap: 0; border-radius: 16px; overflow: hidden; border: 1px solid #2a2a2a; }
+  .graph-placeholder { background: rgba(0,0,0,0.4); min-height: 400px; display: flex; align-items: center; justify-content: center; color: #444; font-size: 12px; position: relative; }
+  .selected-node-indicator { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+  .selected-node { width: 64px; height: 64px; border-radius: 50%; background: rgba(220,38,38,0.18); border: 4px solid #DC2626; box-shadow: 0 0 0 6px rgba(220,38,38,0.25); display: flex; align-items: center; justify-content: center; font-size: 22px; }
+
+  /* Detail panel */
+  .detail-panel { background: #1a1a1a; border-left: 1px solid #2a2a2a; padding: 20px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+  .panel-header { display: flex; align-items: flex-start; justify-content: space-between; }
+  .panel-title { font-size: 14px; font-weight: 600; color: #e5e5e5; line-height: 1.3; }
+  .panel-subtitle { font-size: 11px; color: #777; margin-top: 3px; }
+  .close-btn { background: rgba(255,255,255,0.06); border: none; color: #888; border-radius: 4px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; flex-shrink: 0; }
+
+  /* Chips */
+  .chip-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .chip { display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+  .chip-critical { background: rgba(220,38,38,0.2); color: #DC2626; border: 1px solid rgba(220,38,38,0.4); }
+  .chip-high { background: rgba(225,112,54,0.2); color: #E17036; border: 1px solid rgba(225,112,54,0.4); }
+  .chip-medium { background: rgba(255,220,0,0.15); color: #FFDC00; border: 1px solid rgba(255,220,0,0.35); }
+  .chip-stage { background: rgba(220,38,38,0.15); color: #DC2626; border: 1px solid rgba(220,38,38,0.3); font-weight: 700; letter-spacing: 0.06em; font-size: 8px; text-transform: uppercase; }
+  .shape-square { width: 7px; height: 7px; background: currentColor; display: inline-block; flex-shrink: 0; }
+  .shape-triangle { width: 0; height: 0; border-left: 3.5px solid transparent; border-right: 3.5px solid transparent; border-bottom: 7px solid currentColor; display: inline-block; flex-shrink: 0; }
+  .shape-circle { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; flex-shrink: 0; }
+
+  /* MITRE tags */
+  .mitre-tag { font-size: 9px; background: rgba(24,144,255,0.15); color: #1890ff; border: 1px solid rgba(24,144,255,0.3); border-radius: 3px; padding: 2px 6px; }
+  .mitre-unmapped { font-size: 10px; color: #555; font-style: italic; }
+
+  /* Panel sections */
+  .panel-section { border-top: 1px solid #252525; padding-top: 14px; }
+  .section-label { font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 600; }
+  .section-text { font-size: 12px; color: #aaa; line-height: 1.6; }
+
+  /* Fix hint */
+  .fix-hint { background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.25); border-radius: 8px; padding: 10px 12px; }
+  .fix-hint-label { font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+  .fix-hint-text { font-size: 12px; color: #ddd; }
+  .risk-delta { font-size: 14px; font-weight: 700; color: #DC2626; }
+
+  /* Blast radius overlay */
+  .graph-with-overlay { position: relative; }
+  .blast-radius-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.88); border-top: 1px solid rgba(220,38,38,0.3); border-radius: 0 0 12px 12px; padding: 16px 20px; animation: slideUp 0.2s ease-out; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .blast-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .blast-title { font-size: 12px; font-weight: 600; color: #DC2626; }
+  .blast-resource-list { display: flex; flex-direction: column; gap: 6px; }
+  .blast-resource-item { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #bbb; }
+  .blast-resource-icon { width: 20px; height: 20px; border-radius: 4px; background: rgba(220,38,38,0.15); display: flex; align-items: center; justify-content: center; font-size: 11px; }
+
+  /* Arrow between entity types in edge panel */
+  .entity-arrow { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #aaa; }
+  .arrow-line { flex: 1; height: 1px; background: #444; position: relative; }
+  .arrow-line::after { content: ""; position: absolute; right: -4px; top: -4px; border-left: 6px solid #444; border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
+</style>
+</head>
+<body>
+
+<h1>DESIGN-001 Wireframe: Node Detail Panel / Edge Detail Panel / Blast Radius Overlay</h1>
+<p style="font-size:11px;color:#555;margin-bottom:24px;">
+  All three panels are shown. The detail panels use antd Drawer (placement="right", mask=false) so the graph remains visible.
+  The blast radius overlay slides up within the graph container (not a modal). Panels respond within 300ms of click (SC-005).
+</p>
+
+<!-- NODE DETAIL PANEL -->
+<div class="state-title">State 1: Node Detail Panel (user clicked entry node "admin@contoso.com")</div>
+<div class="split-layout" style="margin-bottom:8px;">
+  <!-- Left: graph placeholder showing selected node -->
+  <div class="graph-placeholder">
+    <div style="text-align:center;color:#333;font-size:11px;">
+      [Graph visible here -- continues to show during panel open]
+      <br><br>
+      <div class="selected-node-indicator">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <div style="font-size:8px;color:#DC2626;text-transform:uppercase;letter-spacing:0.08em;border:1px solid rgba(220,38,38,0.3);padding:2px 6px;border-radius:3px;background:rgba(220,38,38,0.12);">Initial Access</div>
+          <div class="selected-node">&#128100;</div>
+          <div style="font-size:10px;color:#ccc;">admin@contoso.com</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: detail panel -->
+  <div class="detail-panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">admin@contoso.com</div>
+        <div class="panel-subtitle">User &bull; Cloud Application Administrator</div>
+      </div>
+      <button class="close-btn" title="Close panel (Esc)">&times;</button>
+    </div>
+
+    <!-- Chips row -->
+    <div class="chip-row">
+      <span class="chip chip-critical"><span class="shape-square"></span>Critical</span>
+      <span class="chip chip-stage">Initial Access</span>
+    </div>
+
+    <!-- MITRE section -->
+    <div class="panel-section">
+      <div class="section-label">MITRE ATT&CK</div>
+      <div class="chip-row" style="margin-bottom:6px;">
+        <span style="font-size:9px;color:#555;">Tactic:</span>
+        <span class="mitre-tag">TA0001 Initial Access</span>
+      </div>
+      <div class="chip-row">
+        <span style="font-size:9px;color:#555;">Technique:</span>
+        <span class="mitre-tag">T1589.001 Credentials</span>
+      </div>
+    </div>
+
+    <!-- Finding section -->
+    <div class="panel-section">
+      <div class="section-label">Finding</div>
+      <p class="section-text">Leaked credential found on dark web marketplace. admin@contoso.com appears in a breach dataset with plaintext password, posted 14 days ago.</p>
+    </div>
+
+    <!-- Remediation / Fix hint -->
+    <div class="panel-section">
+      <div class="section-label">Recommended Fix</div>
+      <div class="fix-hint">
+        <div class="fix-hint-label">Fix this finding</div>
+        <div class="fix-hint-text">Reset password immediately and enforce phishing-resistant MFA (FIDO2 or Certificate-based).</div>
+        <div style="margin-top:8px;font-size:11px;color:#888;">Score reduction: <span class="risk-delta">-15 pts</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="annotation">Panel slides in from right (200ms ease-out). Graph remains visible (mask=false on antd Drawer). Escape key closes. Width: 380px desktop, 100vw &lt;768px. Response &lt;300ms (SC-005).</p>
+
+<!-- NODE DETAIL PANEL -- MITRE UNMAPPED STATE -->
+<div class="spacer"></div>
+<div class="state-title">State 2: Node Detail Panel -- MITRE technique unmapped (error state for node)</div>
+<div class="split-layout" style="margin-bottom:8px;">
+  <div class="graph-placeholder" style="min-height:200px;">
+    <div style="font-size:11px;color:#333;">[Graph remains visible]</div>
+  </div>
+  <div class="detail-panel" style="min-height:200px;">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">some-service-principal</div>
+        <div class="panel-subtitle">Service Principal &bull; App Registration</div>
+      </div>
+      <button class="close-btn">&times;</button>
+    </div>
+    <div class="chip-row">
+      <span class="chip chip-high"><span class="shape-triangle"></span>High</span>
+    </div>
+    <div class="panel-section">
+      <div class="section-label">MITRE ATT&CK</div>
+      <div class="mitre-unmapped">Unmapped &mdash; MITRE technique not yet assigned to this check.</div>
+    </div>
+    <div class="panel-section">
+      <div class="section-label">Finding</div>
+      <p class="section-text">Service principal has GrantsHighRiskPermission (Application.ReadWrite.All) without scoped consent.</p>
+    </div>
+    <div class="panel-section">
+      <div class="section-label">Recommended Fix</div>
+      <div class="fix-hint">
+        <div class="fix-hint-text">Scope the permission grant or remove the high-risk API permission from the app manifest.</div>
+        <div style="margin-top:8px;font-size:11px;color:#888;">Score reduction: <span class="risk-delta">-8 pts</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="annotation">MITRE "Unmapped" shown in gray italics. Panel does not break or show an error state -- graph renders normally. Per UW error state table.</p>
+
+<!-- EDGE DETAIL PANEL -->
+<div class="spacer"></div>
+<div class="state-title">State 3: Edge Detail Panel (user clicked MemberOf edge)</div>
+<div class="split-layout" style="margin-bottom:8px;">
+  <div class="graph-placeholder" style="min-height:260px;">
+    <div style="font-size:11px;color:#333;text-align:center;">
+      [Graph visible -- hot edge between admin@contoso.com and IT-Admins is highlighted]
+    </div>
+  </div>
+  <div class="detail-panel" style="min-height:260px;">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">MemberOf</div>
+        <div class="panel-subtitle">Relationship between two entities</div>
+      </div>
+      <button class="close-btn">&times;</button>
+    </div>
+
+    <!-- Entity flow -->
+    <div class="entity-arrow">
+      <span style="font-size:11px;background:#1e1e1e;padding:4px 8px;border-radius:4px;color:#ccc;">admin@contoso.com</span>
+      <div class="arrow-line"></div>
+      <span style="font-size:11px;background:#1e1e1e;padding:4px 8px;border-radius:4px;color:#ccc;">IT-Admins</span>
+    </div>
+
+    <div class="chip-row">
+      <span class="chip chip-high"><span class="shape-triangle"></span>High</span>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-label">MITRE ATT&CK</div>
+      <div class="chip-row">
+        <span class="mitre-tag">T1078.004 Valid Accounts: Cloud Accounts</span>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-label">Source Engine</div>
+      <div class="section-text">Identity Hygiene</div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-label">Remediation</div>
+      <div class="fix-hint">
+        <div class="fix-hint-text">Remove admin@contoso.com from IT-Admins group, or remove the IT-Admins group's Global Administrator role assignment.</div>
+        <div style="margin-top:8px;font-size:11px;color:#888;">This severs path-001.</div>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="annotation">Edge panel uses same Drawer component as node panel. "Source -> Target" entity names shown with a horizontal arrow connector.</p>
+
+<!-- BLAST RADIUS OVERLAY -->
+<div class="spacer"></div>
+<div class="state-title">State 4: Blast Radius Overlay (slides up within graph area)</div>
+<div style="background:rgba(0,0,0,0.5);border-radius:16px;overflow:hidden;position:relative;min-height:280px;border:1px solid #2a2a2a;">
+  <!-- Graph area -->
+  <div style="padding:24px;display:flex;align-items:center;justify-content:center;height:280px;color:#444;font-size:12px;">
+    [Attack path graph visible here]
+  </div>
+
+  <!-- Blast radius overlay sliding up -->
+  <div class="blast-radius-overlay">
+    <div class="blast-header">
+      <div class="blast-title">&#9762; Blast Radius &mdash; What an attacker gains from Global Administrator</div>
+      <button class="close-btn">&times;</button>
+    </div>
+    <div class="blast-resource-list">
+      <div class="blast-resource-item">
+        <div class="blast-resource-icon">&#128140;</div>
+        <span>All mailboxes &mdash; <strong>1,247</strong> total</span>
+      </div>
+      <div class="blast-resource-item">
+        <div class="blast-resource-icon">&#128193;</div>
+        <span>SharePoint sites &mdash; <strong>89</strong> total</span>
+      </div>
+      <div class="blast-resource-item">
+        <div class="blast-resource-icon">&#128483;</div>
+        <span>Teams channels &mdash; <strong>156</strong> total</span>
+      </div>
+      <div class="blast-resource-item">
+        <div class="blast-resource-icon">&#128279;</div>
+        <span>Connected third-party apps &mdash; <strong>12</strong> total</span>
+      </div>
+      <div class="blast-resource-item">
+        <div class="blast-resource-icon">&#128274;</div>
+        <span>Conditional Access policies in scope &mdash; <strong>8</strong> total</span>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="annotation">
+  Blast radius slides up from bottom of graph container (CSS transform transition, 200ms). Not a modal -- graph remains visible above.
+  Role="dialog", aria-label="Blast radius overlay". Focus trapped within overlay while open. Escape closes.
+  Empty state: "No downstream resources identified." shown when reachableResources is empty.
+  Resource icons: inline SVG emoji placeholders -- in implementation, use inline SVG shapes (no external CDN).
+</p>
+
+<!-- BLAST RADIUS EMPTY STATE -->
+<div class="spacer"></div>
+<div class="state-title">State 5: Blast Radius -- Empty State</div>
+<div style="background:rgba(0,0,0,0.5);border-radius:16px;overflow:hidden;position:relative;min-height:180px;border:1px solid #2a2a2a;">
+  <div style="padding:24px;display:flex;align-items:center;justify-content:center;height:120px;color:#444;font-size:12px;">[Graph]</div>
+  <div class="blast-radius-overlay">
+    <div class="blast-header">
+      <div class="blast-title">&#9762; Blast Radius</div>
+      <button class="close-btn">&times;</button>
+    </div>
+    <div style="font-size:12px;color:#555;font-style:italic;">No downstream resources identified. This tenant may have minimal permission exposure.</div>
+  </div>
+</div>
+
+<!-- IMPLEMENTATION NOTES -->
+<div class="spacer"></div>
+<div style="border:1px solid #2a2a2a;border-radius:8px;padding:16px;font-size:11px;color:#666;line-height:1.8;">
+  <strong style="color:#888;display:block;margin-bottom:8px;">Implementation Notes</strong>
+  <ul style="list-style:disc;padding-left:16px;">
+    <li>NodeDetailPanel and EdgeDetailPanel: use antd Drawer with placement="right", mask={false}, width={380}. Both render into the graph container's DOM subtree.</li>
+    <li>Only one panel open at a time. If a second node/edge is clicked while a panel is open, the panel content updates without close/re-open animation.</li>
+    <li>Clicking the graph background (SVG canvas, not a node/edge) clears selection and closes panel.</li>
+    <li>BlastRadiusOverlay: absolutely positioned within the graph container div. CSS transform translateY(100%) initially, animates to translateY(0) on show. Not mounted until first triggered (lazy mount). Unmounted on close for performance.</li>
+    <li>All inline SVG icons for resource types -- no external CDN references. Use simple geometric shapes or Unicode characters. In production implementation, use small inline SVG paths.</li>
+    <li>Focus management: when a panel opens, focus moves to the panel's close button. Escape key listener is on the panel container.</li>
+    <li>The Tier-0 target node (e.g., Global Administrator directory role) has fixText=null in the API response. The NodeDetailPanel must show "No remediation available for target nodes." for this case.</li>
+  </ul>
+</div>
+
+</body>
+</html>
