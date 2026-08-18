@@ -77,25 +77,74 @@ if (-not (Test-Path $roadmapDest) -and (Test-Path $roadmapSrc)) {
     Write-Host ""
 }
 
-# --- Check spec-kit ---
+# --- spec-kit setup ---
+Write-Host "Setting up spec-kit..."
+
 $specify = Get-Command specify -ErrorAction SilentlyContinue
+
+if (-not $specify) {
+    $uv = Get-Command uv -ErrorAction SilentlyContinue
+    if (-not $uv) {
+        Write-Host "  Installing uv package manager..."
+        try {
+            powershell -c "irm https://astral.sh/uv/install.ps1 | iex" 2>$null
+            # Reload PATH
+            $env:PATH = "$env:USERPROFILE\.local\bin;$env:PATH"
+            $uv = Get-Command uv -ErrorAction SilentlyContinue
+        } catch {
+            Write-Host "  uv install failed."
+        }
+    }
+
+    if ($uv) {
+        Write-Host "  Installing specify-cli via uv..."
+        try {
+            & uv tool install specify-cli --quiet 2>$null
+            $toolDir = (& uv tool dir 2>$null).Trim()
+            if ($toolDir) { $env:PATH = "$toolDir\bin;$env:PATH" }
+            $specify = Get-Command specify -ErrorAction SilentlyContinue
+        } catch {
+            Write-Host "  specify-cli install failed."
+        }
+    }
+}
+
 if ($specify) {
-    Write-Host "spec-kit (specify CLI) found at: $($specify.Source)"
-    Write-Host "  Run: specify init . --integration claude --script py"
+    $specifyDir = Join-Path $ProjectRoot ".specify"
+    if (-not (Test-Path $specifyDir)) {
+        Write-Host "  Running: specify init . --integration claude --script py"
+        try {
+            & specify init . --integration claude --script py 2>$null
+            Write-Host "  spec-kit initialized."
+            Write-Host "  Commands available: /speckit.specify  /speckit.clarify  /speckit.converge"
+        } catch {
+            Write-Host "  spec-kit init failed — run manually:"
+            Write-Host "    specify init . --integration claude --script py"
+        }
+    } else {
+        Write-Host "  spec-kit already initialized (.specify\ exists). Skipping init."
+    }
 } else {
-    Write-Host "spec-kit (optional): not installed."
-    Write-Host "  To install: pip install uv; uv tool install specify-cli"
-    Write-Host "  Then run:   specify init . --integration claude --script py"
+    Write-Host "  spec-kit could not be installed automatically."
+    Write-Host "  To install manually:"
+    Write-Host "    powershell -c `"irm https://astral.sh/uv/install.ps1 | iex`""
+    Write-Host "    uv tool install specify-cli"
+    Write-Host "    specify init . --integration claude --script py"
 }
 Write-Host ""
 
 # --- Done ---
 Write-Host "Setup complete."
 Write-Host ""
-Write-Host "Next steps:"
-Write-Host "  1. Open Claude Code in your project directory"
-Write-Host "  2. Start any request with: @tech-lead <your request>"
-Write-Host "  3. Follow the workflow in docs\workflow.md"
+Write-Host "Workflow:"
+Write-Host "  1. (Optional) /speckit.specify  -- create structured spec.md"
+Write-Host "  2. (Optional) /speckit.clarify  -- clarify ambiguities in spec.md"
+Write-Host "  3. @tech-lead                   -- investigate sources, UW doc, TECH spec"
+Write-Host "  4. @designer                    -- wireframes + DESIGN doc (if UI)"
+Write-Host "  5. @scrum-master                -- tickets with AC + DoD"
+Write-Host "  6. @backend / @frontend         -- implement"
+Write-Host "  7. @qa                          -- validate"
+Write-Host "  8. (Optional) /speckit.converge -- check code against original spec"
 Write-Host ""
-Write-Host "Agent order: tech-lead -> designer (if UI) -> scrum-master -> backend/frontend -> qa"
+Write-Host "Full guide: docs\workflow.md"
 Write-Host ""

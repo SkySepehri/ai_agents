@@ -9,6 +9,7 @@ import json
 import os
 import platform
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -92,16 +93,87 @@ def setup_ai_doc(cwd: Path):
             print()
 
 
-def check_spec_kit():
-    """Check if spec-kit is available and offer installation guidance."""
+def install_uv() -> bool:
+    """Attempt to install uv. Returns True if uv is available afterwards."""
+    if shutil.which("uv"):
+        return True
+    system = platform.system()
+    print("  uv not found — attempting install...")
+    try:
+        if system == "Windows":
+            subprocess.run(
+                ["powershell", "-c", "irm https://astral.sh/uv/install.ps1 | iex"],
+                check=True, capture_output=True,
+            )
+        else:
+            subprocess.run(
+                "curl -LsSf https://astral.sh/uv/install.sh | sh",
+                shell=True, check=True, capture_output=True,
+            )
+        # Reload PATH
+        home = Path.home()
+        for candidate in [home / ".local" / "bin", home / ".cargo" / "bin"]:
+            if candidate.exists():
+                os.environ["PATH"] = str(candidate) + os.pathsep + os.environ.get("PATH", "")
+        return bool(shutil.which("uv"))
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+
+def setup_spec_kit(cwd: Path):
+    """Auto-install specify-cli and initialize spec-kit in the project."""
+    print("Setting up spec-kit...")
+
     specify = shutil.which("specify")
+
+    if not specify:
+        uv_available = install_uv()
+        if uv_available:
+            print("  Installing specify-cli via uv...")
+            try:
+                subprocess.run(
+                    ["uv", "tool", "install", "specify-cli", "--quiet"],
+                    check=True, capture_output=True,
+                )
+                # Try to find newly installed specify
+                try:
+                    result = subprocess.run(
+                        ["uv", "tool", "dir"], capture_output=True, text=True
+                    )
+                    tool_bin = Path(result.stdout.strip()) / "bin"
+                    if tool_bin.exists():
+                        os.environ["PATH"] = str(tool_bin) + os.pathsep + os.environ.get("PATH", "")
+                except Exception:
+                    pass
+                specify = shutil.which("specify")
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                pass
+
     if specify:
-        print(f"spec-kit (specify CLI) found at: {specify}")
-        print("  Run: specify init . --integration claude --script py")
+        specify_dir = cwd / ".specify"
+        if not specify_dir.exists():
+            print("  Running: specify init . --integration claude --script py")
+            try:
+                subprocess.run(
+                    [specify, "init", ".", "--integration", "claude", "--script", "py"],
+                    cwd=cwd, check=True, capture_output=True,
+                )
+                print("  spec-kit initialized.")
+                print("  Commands available: /speckit.specify  /speckit.clarify  /speckit.converge")
+            except subprocess.CalledProcessError:
+                print("  spec-kit init failed — run manually:")
+                print("    specify init . --integration claude --script py")
+        else:
+            print("  spec-kit already initialized (.specify/ exists). Skipping init.")
     else:
-        print("spec-kit (optional): not installed.")
-        print("  To install: pip install uv && uv tool install specify-cli")
-        print("  Then run:   specify init . --integration claude --script py")
+        print("  spec-kit could not be installed automatically.")
+        print("  To install manually:")
+        if platform.system() == "Windows":
+            print("    powershell -c \"irm https://astral.sh/uv/install.ps1 | iex\"")
+        else:
+            print("    curl -LsSf https://astral.sh/uv/install.sh | sh")
+        print("    uv tool install specify-cli")
+        print("    specify init . --integration claude --script py")
     print()
 
 
@@ -146,19 +218,24 @@ def main():
 
     setup_agents(cwd)
     setup_ai_doc(cwd)
-    check_spec_kit()
+    setup_spec_kit(cwd)
 
     if platform.system() == "Windows":
         write_vscode_settings(cwd)
 
     print("Setup complete.")
     print()
-    print("Next steps:")
-    print("  1. Open Claude Code in your project directory")
-    print("  2. Start any request with: @tech-lead <your request>")
-    print("  3. Follow the workflow in docs/workflow.md")
+    print("Workflow:")
+    print("  1. (Optional) /speckit.specify  — create structured spec.md")
+    print("  2. (Optional) /speckit.clarify  — clarify ambiguities in spec.md")
+    print("  3. @tech-lead                   — investigate sources, UW doc, TECH spec")
+    print("  4. @designer                    — wireframes + DESIGN doc (if UI)")
+    print("  5. @scrum-master                — tickets with AC + DoD")
+    print("  6. @backend / @frontend         — implement")
+    print("  7. @qa                          — validate")
+    print("  8. (Optional) /speckit.converge — check code against original spec")
     print()
-    print("Agent order: tech-lead -> designer (if UI) -> scrum-master -> backend/frontend -> qa")
+    print("Full guide: docs/workflow.md")
     print()
 
 

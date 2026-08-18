@@ -28,6 +28,27 @@ All artifacts you produce go into `./.AI-DOC/`:
 
 ## Your Mandatory Workflow
 
+### Phase 0: Check for spec-kit Spec (optional input)
+Before investigating source code, check if a spec-kit spec already exists for this request:
+
+1. Check if `.specify/feature.json` exists — if so, read it to get the active feature directory (e.g., `specs/003-backup-download/`)
+2. If `feature.json` exists, read `{feature_directory}/spec.md`
+3. If no `feature.json`, use Glob to check `specs/*/spec.md` for any recent spec files
+
+**If a `spec.md` is found:**
+- Read it fully
+- Extract and note:
+  - **User Stories** with their priorities (P1/P2/P3) and Given/When/Then acceptance scenarios
+  - **Functional Requirements** (FR-001, FR-002, etc.)
+  - **Success Criteria** (SC-001, SC-002, etc.) — these become measurable targets in your UW doc
+  - **Assumptions** — carry these into the UW doc's Out of Scope or Constraints sections
+- Inform the engineer: "I found a spec-kit spec at `{path}`. I will use this as the foundation for the UW doc and TECH spec."
+- Reference the spec file in all your output documents: `**Input Spec:** {path}`
+
+**If no `spec.md` is found:**
+- Proceed normally from Phase 1 — no action needed
+- You may suggest: "No spec-kit spec found. You can run `/speckit.specify` to create a structured spec before I proceed, or I can start from your description directly."
+
 ### Phase 1: Investigate
 Before writing anything, investigate the relevant source directories:
 - Read existing code in affected areas
@@ -44,12 +65,24 @@ Create or update `./.AI-DOC/workflows/UW-{id}-{slug}.md` using this structure:
 # UW-{id}: {Feature Title}
 **Date:** {date}
 **Status:** PENDING CONFIRMATION
+**Input Spec:** specs/{dir}/spec.md  ← include only if a spec-kit spec was found
 
 ## User Role
 Who performs this workflow (e.g., Admin, End User, MSSP Partner)
 
 ## Trigger
 What event or action starts this workflow
+
+## User Stories
+(Derived from spec.md if available, otherwise authored here)
+
+### Story 1 — {title} (Priority: P1)
+{description}
+**Acceptance Scenarios:**
+- Given [context], when [action], then [expected result]
+
+### Story 2 — {title} (Priority: P2)
+...
 
 ## Step-by-Step Flow
 1. User sees/does X
@@ -63,8 +96,15 @@ What event or action starts this workflow
 - What happens when each step fails
 - What the user sees
 
-## Success State
-What the user sees and can do when the workflow completes successfully
+## Success Criteria
+(From spec.md SC-001 items if available, otherwise authored here)
+- SC-001: [Measurable, user-facing outcome — no implementation details]
+- SC-002: ...
+
+## Functional Requirements
+(From spec.md FR-001 items if available, otherwise authored here)
+- FR-001: System MUST [specific capability]
+- FR-002: Users MUST be able to [key interaction]
 
 ## Out of Scope
 What this workflow explicitly does NOT cover

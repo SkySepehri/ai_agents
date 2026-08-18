@@ -62,13 +62,60 @@ if [ ! -f "$AI_DOC_DIR/roadmap/ROADMAP.md" ]; then
   echo "Created initial ROADMAP.md from template."
 fi
 
+# --- spec-kit setup ---
+echo ""
+echo "Setting up spec-kit..."
+
+SPECIFY=$(command -v specify 2>/dev/null)
+
+if [ -z "$SPECIFY" ]; then
+  # Try to install uv if missing
+  UV=$(command -v uv 2>/dev/null)
+  if [ -z "$UV" ]; then
+    echo "  Installing uv package manager..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh 2>/dev/null
+    # Reload PATH to pick up uv
+    export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+    UV=$(command -v uv 2>/dev/null)
+  fi
+
+  if [ -n "$UV" ]; then
+    echo "  Installing specify-cli via uv..."
+    uv tool install specify-cli --quiet 2>/dev/null && \
+      export PATH="$HOME/.local/bin:$(uv tool dir)/bin:$PATH"
+    SPECIFY=$(command -v specify 2>/dev/null)
+  fi
+fi
+
+if [ -n "$SPECIFY" ]; then
+  if [ ! -d "$(pwd)/.specify" ]; then
+    echo "  Running: specify init . --integration claude --script py"
+    specify init . --integration claude --script py 2>/dev/null && \
+      echo "  spec-kit initialized. Commands available: /speckit.specify /speckit.clarify /speckit.converge" || \
+      echo "  spec-kit init failed — run manually: specify init . --integration claude --script py"
+  else
+    echo "  spec-kit already initialized (.specify/ exists). Skipping init."
+  fi
+else
+  echo "  spec-kit not installed (uv unavailable or install failed)."
+  echo "  To install manually:"
+  echo "    curl -LsSf https://astral.sh/uv/install.sh | sh"
+  echo "    uv tool install specify-cli"
+  echo "    specify init . --integration claude --script py"
+fi
+
 echo ""
 echo "Setup complete."
 echo ""
-echo "Next steps:"
-echo "  1. Open Claude Code in your project directory"
-echo "  2. Start any request with: @tech-lead {your request}"
-echo "  3. Follow the workflow in dela-agents/docs/workflow.md"
+echo "Workflow:"
+echo "  1. (Optional) /speckit.specify  — create structured spec.md"
+echo "  2. (Optional) /speckit.clarify  — clarify ambiguities in spec.md"
+echo "  3. @tech-lead                   — investigate sources, UW doc, TECH spec"
+echo "  4. @designer                    — wireframes + DESIGN doc (if UI)"
+echo "  5. @scrum-master                — tickets with AC + DoD"
+echo "  6. @backend / @frontend         — implement"
+echo "  7. @qa                          — validate"
+echo "  8. (Optional) /speckit.converge — check code against original spec"
 echo ""
-echo "Agent order: tech-lead → designer (if UI) → scrum-master → backend/frontend → qa"
+echo "Full guide: docs/workflow.md"
 echo ""

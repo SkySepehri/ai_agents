@@ -10,9 +10,17 @@ This document describes the agent-driven development workflow. Every feature or 
 📥 Request / Feature / Bug
         │
         ▼
+  [OPTIONAL] spec-kit — run before Tech Lead for richer input
+        ├── /speckit.specify  → creates specs/NNN-slug/spec.md
+        │     (user stories + FR-001 requirements + SC-001 success criteria)
+        └── /speckit.clarify  → surfaces ambiguities, updates spec.md
+        │
+        ▼
     Tech Lead (claude-opus-4-6)
+        ├── Phase 0: Check for spec.md → reads it if found
         ├── Phase 1: Investigate source directories
         ├── Phase 2: Define end user workflow → writes UW-{id}.md
+        │             (uses spec.md user stories + FR + SC as input when available)
         ├── ⏸️  PAUSE — engineer confirms UW doc
         ├── Phase 3: Design technical solution → writes TECH-{id}.md
         ├── Phase 4: Update ROADMAP.md
@@ -40,6 +48,9 @@ This document describes the agent-driven development workflow. Every feature or 
                                 ├── Produces QA-{id}.md report
                                 └── ⏸️  PAUSE — engineer confirms QA sign-off
                                         │ signed off
+                                        ▼
+                  [OPTIONAL] /speckit.converge — checks code against original spec.md
+                                        │
                                         ▼
                                 Scrum Master updates ROADMAP to Done
 ```
@@ -92,18 +103,32 @@ Use a sequential ID for each feature/bug:
 
 ---
 
-## Agent Invocation
+## Agent & Command Invocation
 
-In Claude Code, invoke agents using `@agent-name` or by selecting them from the agent picker.
+In Claude Code, invoke agents using `@agent-name` and spec-kit commands using `/speckit.*`.
 
-| Agent | When to invoke |
-|-------|---------------|
-| `@tech-lead` | Any new request — always first |
-| `@designer` | After Tech Lead sign-off, if UI is involved |
-| `@scrum-master` | After Tech Lead + Designer sign-offs |
-| `@backend` | After Scrum Master confirmation, for backend tickets |
-| `@frontend` | After Scrum Master confirmation, for frontend tickets |
-| `@qa` | After Backend + Frontend complete their tickets |
+| Step | Command / Agent | When |
+|------|----------------|------|
+| 0a (optional) | `/speckit.specify` | Before Tech Lead — creates structured spec.md |
+| 0b (optional) | `/speckit.clarify` | After specify — removes spec ambiguities |
+| 1 | `@tech-lead` | Always first — reads spec.md if present |
+| 2 | `@designer` | After Tech Lead sign-off, if UI is involved |
+| 3 | `@scrum-master` | After Tech Lead + Designer sign-offs |
+| 4 | `@backend` | After Scrum Master confirmation, backend tickets |
+| 5 | `@frontend` | After Scrum Master confirmation, frontend tickets |
+| 6 | `@qa` | After Backend + Frontend complete their tickets |
+| 7 (optional) | `/speckit.converge` | After QA — validates code against original spec.md |
+
+---
+
+## spec-kit Commands Reference
+
+| Command | What it produces | Required? |
+|---------|-----------------|-----------|
+| `/speckit.specify <description>` | `specs/NNN-slug/spec.md` with user stories, FR, SC | No — but improves UW quality |
+| `/speckit.clarify` | Updates spec.md with answers to ambiguity questions | No — use when spec has unclear areas |
+| `/speckit.constitution` | `.specify/memory/constitution.md` — project principles | No — run once per project |
+| `/speckit.converge` | Appends remaining work to tasks if code doesn't match spec | No — useful for gap checking |
 
 ---
 
