@@ -27,16 +27,54 @@ git clone git@github-sky:SkySepehri/ai_agents.git
 
 ### 2. Run setup from your project root
 
+Pick the script for your OS:
+
+**macOS / Linux (bash)**
 ```bash
 cd /path/to/your/project
-bash /path/to/dela-agents/setup.sh
+bash /path/to/ai_agents/setup.sh
+```
+
+**Windows (PowerShell)**
+```powershell
+cd C:\path\to\your\project
+# Allow script execution for this session
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+& "C:\path\to\ai_agents\setup.ps1"
+```
+
+**Any OS (Python 3.8+) — recommended if unsure**
+```bash
+cd /path/to/your/project
+python /path/to/ai_agents/setup.py
 ```
 
 The setup script will:
 - Copy all agents to `.claude/agents/` in your project
 - Create the `.AI-DOC/` directory structure for documentation artifacts
+- Check if spec-kit is installed and provide guidance
 
-### 3. Open your project in Claude Code
+### 3. (Optional but recommended) Install spec-kit
+
+spec-kit adds `/speckit.clarify` and `/speckit.specify` as native Claude Code skills — useful for clarifying requirements before invoking `@tech-lead`.
+
+```bash
+# Install uv (if not already installed)
+# macOS/Linux:
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# Windows (PowerShell):
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Install specify-cli
+uv tool install specify-cli
+
+# Initialize spec-kit in your project (run from your project root)
+specify init . --integration claude --script py
+```
+
+See [spec-kit integration](#spec-kit-integration) section below for how it fits into the workflow.
+
+### 4. Open your project in Claude Code
 
 ```bash
 cd /path/to/your/project
@@ -180,6 +218,45 @@ Blank templates for each document type are in `templates/`. These are used by th
 - `templates/DESIGN-template.md`
 - `templates/TICKETS-template.md`
 - `templates/ROADMAP-template.md`
+
+---
+
+## spec-kit Integration
+
+[spec-kit](https://github.com/github/spec-kit) is an optional but recommended companion. It adds native Claude Code skills for structured spec writing that complement the `@tech-lead` agent.
+
+### How it fits into the workflow
+
+```
+Engineer describes the request
+        │
+        ▼
+/speckit.clarify          ← spec-kit: surfaces ambiguous details BEFORE writing anything
+        │
+        ▼
+/speckit.specify          ← spec-kit: produces a structured spec.md with user stories + FR + SC
+        │
+        ▼
+@tech-lead                ← reads the spec.md, investigates sources, writes UW doc + TECH spec
+        │
+        ▼
+(rest of agent workflow...)
+```
+
+### What spec-kit adds
+
+| spec-kit Command | Value |
+|---|---|
+| `/speckit.clarify` | AI asks clarifying questions — surfaces gaps before the Tech Lead starts |
+| `/speckit.specify` | Structured spec with prioritized user stories, FR-001 requirements, SC-001 success criteria |
+| `/speckit.constitution` | Project-level principles file (complements CLAUDE.md) |
+| `/speckit.converge` | After implementation, checks what was built against the original spec |
+
+### What we do NOT use from spec-kit
+
+- `/speckit.plan` — replaced by `@tech-lead` TECH spec (richer, codebase-aware)
+- `/speckit.tasks` — replaced by `@scrum-master` (richer AC + DoD + dependency tracking)
+- `/speckit.implement` — replaced by `@backend` and `@frontend` agents (gated, role-separated)
 
 ---
 
